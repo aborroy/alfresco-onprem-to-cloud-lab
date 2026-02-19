@@ -32,9 +32,9 @@ docker compose version
 |---|---|---|
 | `01-repo` | `stages/01-repo/compose.yaml` | Repository + PostgreSQL (no search) |
 | `02-repo-search-solr` | `stages/02-repo-search-solr/compose.yaml` | Legacy Solr search topology |
-| `03-repo-search-opensearch` | `stages/03-repo-search-opensearch/compose.yaml` | OpenSearch search topology + reindex |
-| `04-repo-search-opensearch-transform-aio` | `stages/04-repo-search-opensearch-transform-aio/compose.yaml` | Add direct `transform-core-aio` |
-| `05-repo-search-opensearch-transform-ats` | `stages/05-repo-search-opensearch-transform-ats/compose.yaml` | Switch to ATS async transform (ActiveMQ + SFS + T-Router) |
+| `03-repo-search-opensearch` | `stages/03-repo-search-opensearch/compose.yaml` | OpenSearch search topology + reindex (`metadata-only` indexing) |
+| `04-repo-search-opensearch-transform-aio` | `stages/04-repo-search-opensearch-transform-aio/compose.yaml` | Add direct `transform-core-aio` (`metadata-only` indexing) |
+| `05-repo-search-opensearch-transform-ats` | `stages/05-repo-search-opensearch-transform-ats/compose.yaml` | Switch to ATS async transform (ActiveMQ + SFS + T-Router) (`first step with metadata + content indexing`) |
 | `06-full-stack` | `stages/06-full-stack/compose.yaml` | Add ADW + Share |
 | `07-full-stack-proxy` | `stages/07-full-stack-proxy/compose.yaml` | Add reverse proxy |
 | `08-best-practices` | `stages/08-best-practices/compose.yaml` | Healthchecks/resources/depends_on patterns |
@@ -163,6 +163,7 @@ expected
 ### Step 3 - Stage 03 (Switch to OpenSearch)
 
 > Docker Compose introduces `healthcheck`, conditional `depends_on` (`condition: ...`), and `restart: on-failure:5` for the one-shot reindex job.
+> OpenSearch indexing scope in this step: `metadata only` (content indexing is not available yet).
 
 ```mermaid
 flowchart LR
@@ -209,6 +210,8 @@ expected
 
 ### Step 4 - Stage 04 (Direct Transform Core AIO)
 
+> OpenSearch indexing scope in this step: `metadata only` (still no ATS async transform pipeline).
+
 ```mermaid
 flowchart LR
   user["User"] --> repo["alfresco"]
@@ -247,6 +250,8 @@ transform-core-aio is Up, and /ready returns HTTP 200
 ```
 
 ### Step 5 - Stage 05 (Switch to ATS Async Transform)
+
+> OpenSearch indexing scope from this step onward: `metadata + content` (first step enabling full content indexing with OpenSearch).
 
 ```mermaid
 flowchart LR
