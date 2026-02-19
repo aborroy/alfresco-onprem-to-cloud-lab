@@ -321,38 +321,28 @@ flowchart LR
 
 ```bash
 docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml down
-docker compose --env-file .env -f stages/06-full-stack/compose.yaml up -d
+docker compose --env-file .env -f stages/06-full-stack/compose.yaml up
 ```
 
 Validate DB and Repository (instructions above)
 
-Validate Search (instructions above, including OpenSearch API and Alfresco API)
-
-```bash
-docker compose --env-file .env -f stages/06-full-stack/compose.yaml ps \
-  search-reindexing search-live-indexing
-```
-
-expected
-
-```text
-search-reindexing runs and completes; search-live-indexing stays Up afterwards
-```
+Validate Search (instructions above)
 
 Validate Transform (instructions above)
 
-Validate UI (new in this step)
+Validate UI (manual end-to-end)
 
-```bash
-docker compose --env-file .env -f stages/06-full-stack/compose.yaml ps digital-workspace share
-curl -f http://localhost:${ADW_HTTP_PORT}/
-curl -f http://localhost:${SHARE_HTTP_PORT}/share
-```
+1. Open `http://localhost:8080/` (ADW) in your browser.
+2. Log in with `${ALFRESCO_ADMIN_USER}` / `${ALFRESCO_ADMIN_PASSWORD}`.
+3. Upload a new text document with a unique word in its body (for example: `stage06-e2e-2026`).
+4. Search in ADW for that unique word and open the returned document.
+5. Optionally repeat in Share at `http://localhost:8080/share` to confirm same result.
 
 expected
 
 ```text
-digital-workspace and share are Up, and both HTTP endpoints return 200/302
+Login works, upload succeeds, and full-text search returns the newly uploaded document.
+This confirms repo, transform, messaging, and OpenSearch indexing are working together.
 ```
 
 ### Step 7 - Stage 07 (Add Reverse Proxy)
