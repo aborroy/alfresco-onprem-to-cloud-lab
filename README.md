@@ -357,6 +357,16 @@ flowchart LR
   repo --> os["opensearch"]
   repo --> mq["activemq"]
   repo --> tr["transform-router"]
+  tr --> aio["transform-core-aio"]
+  tr --> sfs["shared-file-store"]
+  aio --> mq
+  aio --> sfs
+  reidx["search-reindexing"] --> db
+  reidx --> os
+  reidx --> mq
+  live["search-live-indexing"] --> os
+  live --> mq
+  reidx -. "completes first" .-> live
 ```
 
 **Start**
