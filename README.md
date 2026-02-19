@@ -19,12 +19,6 @@ Before starting, ensure:
 3. You have Enterprise credentials/license access where required
 4. You have a baseline on-prem VM (Alfresco 23.3 Community) for migration exercises
 
-Prepare environment file:
-
-```bash
-cp .env.example .env
-```
-
 Optional checks:
 
 ```bash
@@ -469,7 +463,6 @@ Use [stages/12-k8s-image-bakery/README.md](stages/12-k8s-image-bakery/README.md)
 
 ```bash
 cd stages/12-k8s-image-bakery
-cp bakery.env.example bakery.env
 set -a; source ./bakery.env; set +a
 ./scripts/prepare-bakery-workspace.sh --bakery-dir "$BAKERY_DIR"
 ./scripts/build-enterprise-images.sh --env-file ./bakery.env

@@ -27,11 +27,11 @@ By default this stage takes addons from Stage 11:
 
 ## Quick Start
 
-1. Copy environment template:
+1. View environment template:
 
 ```bash
 cd stages/12-k8s-image-bakery
-cp bakery.env.example bakery.env
+cat bakery.env
 ```
 
 2. Edit `bakery.env` and set at least:

@@ -7,11 +7,6 @@
 *.swp
 *.swo
 
-# Environment and secrets
-.env
-.env.*
-!.env.example
-
 # Logs and temp
 *.log
 *.tmp
@@ -25,5 +20,4 @@ stages/**/import/
 stages/11-security-local/proxy/certs/
 
 # Bakery stage generated files
-stages/12-k8s-image-bakery/bakery.env
 stages/12-k8s-image-bakery/helm-values.overrides.yaml
