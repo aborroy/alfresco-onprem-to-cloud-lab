@@ -37,6 +37,7 @@ services:
           cpus: "1"
           memory: 1g
     environment:
+      # Lab only: enable OpenSearch security plugin for production use
       plugins.security.disabled: "true"
       discovery.type: single-node
       OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
@@ -285,6 +286,7 @@ services:
         reservations:
           cpus: "0.5"
           memory: 512m
+    # one-shot job: exits after reindex completes
     restart: on-failure:5
     depends_on:
       postgres:

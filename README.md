@@ -61,7 +61,7 @@ docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats
 
 Then start the next stage.
 
-## Walkthrough (Step by Step)
+## Walkthrough
 
 ### Step 1 - Stage 01 (Repository + PostgreSQL)
 
@@ -71,19 +71,35 @@ flowchart LR
   repo --> db["postgres"]
 ```
 
-**Start**
+Start
 
 ```bash
-docker compose --env-file .env -f stages/01-repo/compose.yaml up -d
+docker compose --env-file .env -f stages/01-repo/compose.yaml up
 ```
 
-**Validate (Repo + DB)**
+Validate DB
 
 ```bash
-docker compose --env-file .env -f stages/01-repo/compose.yaml ps postgres alfresco
 docker compose --env-file .env -f stages/01-repo/compose.yaml exec -T postgres \
   sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-curl -f http://localhost:${REPO_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
+```
+
+expected
+
+```
+/var/run/postgresql:5432 - accepting connections
+```
+
+Validate Repository
+
+```bash
+curl -f http://localhost:8080/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
+```
+
+expected
+
+```json
+{"entry":{"message":"readyProbe: Success - Tested"}}
 ```
 
 ### Step 2 - Stage 02 (Legacy Solr Search)
@@ -95,21 +111,31 @@ flowchart LR
   repo --> solr["solr6"]
 ```
 
-**Start**
+Start
 
 ```bash
 docker compose --env-file .env -f stages/01-repo/compose.yaml down
-docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml up -d
+docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml up
 ```
 
-**Validate (Repo + DB + Solr)**
+Validate DB and Repository (instructions above)
+
+Validata Search
 
 ```bash
-docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml ps postgres alfresco solr6
-docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml exec -T postgres \
-  sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-curl -f http://localhost:${REPO_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
-curl -f "http://localhost:${SOLR_HTTP_PORT}/solr/admin/info/system?wt=json"
+curl -H "X-Alfresco-Search-Secret: secret" \
+  "http://localhost:8983/solr/alfresco/select?q=*&rows=1&wt=json"
+```
+
+expected
+
+```json
+{ "responseHeader":
+  {"status":0,"QTime":61,"params":
+    {"q":"*","rows":"1","wt":"json"}
+  },
+  ...
+}
 ```
 
 ### Step 3 - Stage 03 (Switch to OpenSearch)
