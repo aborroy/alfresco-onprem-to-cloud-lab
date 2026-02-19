@@ -1,0 +1,161 @@
+name: acs25-stage07
+
+services:
+  postgres:
+    image: postgres:${POSTGRES_TAG}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+  opensearch:
+    image: opensearchproject/opensearch:${OPENSEARCH_TAG}
+    environment:
+      plugins.security.disabled: "true"
+      discovery.type: single-node
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    volumes:
+      - ./data/opensearch:/usr/share/opensearch/data
+
+  activemq:
+    image: quay.io/alfresco/alfresco-activemq:${ACTIVEMQ_TAG}
+    ports:
+      - "${ACTIVEMQ_WEB_PORT}:8161"
+    environment:
+      ACTIVEMQ_USERNAME: ${ACTIVEMQ_USERNAME}
+      ACTIVEMQ_PASSWORD: ${ACTIVEMQ_PASSWORD}
+
+  shared-file-store:
+    image: quay.io/alfresco/alfresco-shared-file-store:${SHARED_FILE_STORE_TAG}
+
+  transform-core-aio:
+    image: quay.io/alfresco/alfresco-transform-core-aio:${TRANSFORM_CORE_AIO_TAG}
+    depends_on:
+      - activemq
+      - shared-file-store
+    environment:
+      ACTIVEMQ_URL: nio://activemq:61616
+      ACTIVEMQ_USER: ${ACTIVEMQ_USERNAME}
+      ACTIVEMQ_PASSWORD: ${ACTIVEMQ_PASSWORD}
+      FILE_STORE_URL: http://shared-file-store:8099/alfresco/api/-default-/private/sfs/versions/1/file
+
+  transform-router:
+    image: quay.io/alfresco/alfresco-transform-router:${TRANSFORM_ROUTER_TAG}
+    depends_on:
+      - activemq
+      - shared-file-store
+      - transform-core-aio
+    environment:
+      ACTIVEMQ_URL: nio://activemq:61616
+      CORE_AIO_URL: http://transform-core-aio:8090
+      FILE_STORE_URL: http://shared-file-store:8099/alfresco/api/-default-/private/sfs/versions/1/file
+      JAVA_OPTS: >-
+        -Dqueue.engine.activemq.user=${ACTIVEMQ_USERNAME}
+        -Dqueue.engine.activemq.password=${ACTIVEMQ_PASSWORD}
+
+  alfresco:
+    image: quay.io/alfresco/alfresco-content-repository:${ACS_TAG}
+    depends_on:
+      - postgres
+      - opensearch
+      - activemq
+      - transform-router
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Dencryption.keystore.type=JCEKS
+        -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding
+        -Dencryption.keyAlgorithm=DESede
+        -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore
+        -Dmetadata-keystore.password=${METADATA_KEYSTORE_PASSWORD}
+        -Dmetadata-keystore.aliases=metadata
+        -Dmetadata-keystore.metadata.password=${METADATA_KEYSTORE_METADATA_PASSWORD}
+        -Dmetadata-keystore.metadata.algorithm=DESede
+      JAVA_OPTS: >-
+        -Ddb.driver=org.postgresql.Driver
+        -Ddb.username=${POSTGRES_USER}
+        -Ddb.password=${POSTGRES_PASSWORD}
+        -Ddb.url=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+        -Ddeployment.method=DOCKER_COMPOSE
+        -Dalfresco.host=localhost
+        -Dalfresco.port=${PROXY_HTTP_PORT}
+        -Dalfresco.protocol=http
+        -Dshare.host=localhost
+        -Dshare.port=${PROXY_HTTP_PORT}
+        -Dindex.subsystem.name=elasticsearch
+        -Delasticsearch.indexName=alfresco
+        -Delasticsearch.createIndexIfNotExists=true
+        -Delasticsearch.host=opensearch
+        -Delasticsearch.port=9200
+        -Delasticsearch.secureComms=none
+        -Dmessaging.broker.url=failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true
+        -Dmessaging.broker.username=${ACTIVEMQ_USERNAME}
+        -Dmessaging.broker.password=${ACTIVEMQ_PASSWORD}
+        -Dtransform.service.enabled=true
+        -Dtransform.service.url=http://transform-router:8095
+        -Dsfs.url=http://shared-file-store:8099/
+        -Dlegacy.transform.service.enabled=false
+        -DlocalTransform.core-aio.url=http://transform-core-aio:8090/
+    volumes:
+      - ./data/alf_data:/usr/local/tomcat/alf_data
+
+  search-live-indexing:
+    image: quay.io/alfresco/alfresco-elasticsearch-live-indexing:${SEARCH_LIVE_INDEXING_TAG}
+    depends_on:
+      - opensearch
+      - activemq
+      - alfresco
+    environment:
+      SPRING_ELASTICSEARCH_REST_URIS: http://opensearch:9200
+      SPRING_ACTIVEMQ_BROKERURL: failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true
+      ALFRESCO_ACCEPTED_CONTENT_MEDIA_TYPES_CACHE_BASE_URL: http://transform-core-aio:8090/transform/config
+      ALFRESCO_SHAREDFILESTORE_BASEURL: http://shared-file-store:8099/alfresco/api/-default-/private/sfs/versions/1/file/
+
+  search-reindexing:
+    image: quay.io/alfresco/alfresco-elasticsearch-reindexing:${SEARCH_REINDEXING_TAG}
+    depends_on:
+      - postgres
+      - opensearch
+      - alfresco
+    environment:
+      ALFRESCO_ACCEPTED_CONTENT_MEDIA_TYPES_CACHE_BASE_URL: http://transform-core-aio:8090/transform/config
+      SPRING_ACTIVEMQ_BROKERURL: nio://activemq:61616
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_ELASTICSEARCH_REST_URIS: http://opensearch:9200
+      ALFRESCO_REINDEX_PREFIXES_FILE: file:/config/reindex.prefixes-file.json
+      ALFRESCO_REINDEX_BATCH_SIZE: 100
+      ALFRESCO_REINDEX_FROM_ID: 1
+      ALFRESCO_REINDEX_TO_ID: 100000000
+    volumes:
+      - ../03-repo-search-opensearch/reindex/reindex.prefixes-file.json:/config/reindex.prefixes-file.json:ro
+
+  digital-workspace:
+    image: quay.io/alfresco/alfresco-digital-workspace:${ADW_TAG}
+    depends_on:
+      - alfresco
+    environment:
+      APP_CONFIG_AUTH_TYPE: BASIC
+      APP_CONFIG_ECM_HOST: http://localhost:${PROXY_HTTP_PORT}
+      APP_CONFIG_PROVIDER: ALL
+      BASE_PATH: /workspace/
+
+  share:
+    image: quay.io/alfresco/alfresco-share:${SHARE_TAG}
+    depends_on:
+      - alfresco
+    environment:
+      REPO_HOST: alfresco
+      REPO_PORT: 8080
+
+  proxy:
+    image: nginx:${NGINX_TAG}
+    depends_on:
+      - alfresco
+      - digital-workspace
+    ports:
+      - "${PROXY_HTTP_PORT}:8080"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro

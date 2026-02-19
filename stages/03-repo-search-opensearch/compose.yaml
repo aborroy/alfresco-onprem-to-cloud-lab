@@ -1,0 +1,77 @@
+name: acs25-stage03
+
+services:
+  postgres:
+    image: postgres:${POSTGRES_TAG}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+  opensearch:
+    image: opensearchproject/opensearch:${OPENSEARCH_TAG}
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    volumes:
+      - ./data/opensearch:/usr/share/opensearch/data
+
+  alfresco:
+    image: quay.io/alfresco/alfresco-content-repository:${ACS_TAG}
+    depends_on:
+      - postgres
+      - opensearch
+    ports:
+      - "${REPO_HTTP_PORT}:8080"
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Dencryption.keystore.type=JCEKS
+        -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding
+        -Dencryption.keyAlgorithm=DESede
+        -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore
+        -Dmetadata-keystore.password=${METADATA_KEYSTORE_PASSWORD}
+        -Dmetadata-keystore.aliases=metadata
+        -Dmetadata-keystore.metadata.password=${METADATA_KEYSTORE_METADATA_PASSWORD}
+        -Dmetadata-keystore.metadata.algorithm=DESede
+      JAVA_OPTS: >-
+        -Ddb.driver=org.postgresql.Driver
+        -Ddb.username=${POSTGRES_USER}
+        -Ddb.password=${POSTGRES_PASSWORD}
+        -Ddb.url=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+        -Dindex.subsystem.name=elasticsearch
+        -Delasticsearch.indexName=alfresco
+        -Delasticsearch.createIndexIfNotExists=true
+        -Delasticsearch.host=opensearch
+        -Delasticsearch.port=9200
+        -Delasticsearch.secureComms=none
+        -Dalfresco.events.include=
+        -Dmessaging.subsystem.autoStart=false
+        -Dlocal.transform.service.enabled=false
+        -Dcsrf.filter.enabled=false
+        -Ddeployment.method=DOCKER_COMPOSE
+        -Dalfresco.host=localhost
+        -Dalfresco.port=${REPO_HTTP_PORT}
+        -Dalfresco.protocol=http
+    volumes:
+      - ./data/alf_data:/usr/local/tomcat/alf_data
+
+  search-reindexing:
+    image: quay.io/alfresco/alfresco-elasticsearch-reindexing:${SEARCH_REINDEXING_TAG}
+    depends_on:
+      - postgres
+      - opensearch
+      - alfresco
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_ELASTICSEARCH_REST_URIS: http://opensearch:9200
+      ALFRESCO_REINDEX_PREFIXES_FILE: file:/config/reindex.prefixes-file.json
+      ALFRESCO_REINDEX_BATCH_SIZE: 100
+      ALFRESCO_REINDEX_FROM_ID: 1
+      ALFRESCO_REINDEX_TO_ID: 100000000
+    volumes:
+      - ./reindex/reindex.prefixes-file.json:/config/reindex.prefixes-file.json:ro

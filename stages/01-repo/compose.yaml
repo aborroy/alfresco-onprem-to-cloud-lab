@@ -1,0 +1,44 @@
+name: acs25-stage01
+
+services:
+  postgres:
+    image: postgres:${POSTGRES_TAG}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+  alfresco:
+    image: quay.io/alfresco/alfresco-content-repository:${ACS_TAG}
+    depends_on:
+      - postgres
+    ports:
+      - "${REPO_HTTP_PORT}:8080"
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Dencryption.keystore.type=JCEKS
+        -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding
+        -Dencryption.keyAlgorithm=DESede
+        -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore
+        -Dmetadata-keystore.password=${METADATA_KEYSTORE_PASSWORD}
+        -Dmetadata-keystore.aliases=metadata
+        -Dmetadata-keystore.metadata.password=${METADATA_KEYSTORE_METADATA_PASSWORD}
+        -Dmetadata-keystore.metadata.algorithm=DESede
+      JAVA_OPTS: >-
+        -Ddb.driver=org.postgresql.Driver
+        -Ddb.username=${POSTGRES_USER}
+        -Ddb.password=${POSTGRES_PASSWORD}
+        -Ddb.url=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+        -Dindex.subsystem.name=noindex
+        -Dalfresco.events.include=
+        -Dmessaging.subsystem.autoStart=false
+        -Dlocal.transform.service.enabled=false
+        -Dcsrf.filter.enabled=false
+        -Ddeployment.method=DOCKER_COMPOSE
+        -Dalfresco.host=localhost
+        -Dalfresco.port=${REPO_HTTP_PORT}
+        -Dalfresco.protocol=http
+    volumes:
+      - ./data/alf_data:/usr/local/tomcat/alf_data
