@@ -57,13 +57,24 @@ services:
         -Dalfresco.protocol=http
     volumes:
       - ./data/alf_data:/usr/local/tomcat/alf_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 1m
 
   search-reindexing:
     image: quay.io/alfresco/alfresco-elasticsearch-reindexing:${SEARCH_REINDEXING_TAG}
+    # One-shot bootstrap job: retry transient failures, then exit permanently on success.
+    restart: on-failure:5
     depends_on:
-      - postgres
-      - opensearch
-      - alfresco
+      postgres:
+        condition: service_started
+      opensearch:
+        condition: service_started
+      alfresco:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -75,3 +86,18 @@ services:
       ALFRESCO_REINDEX_TO_ID: 100000000
     volumes:
       - ../../shared/reindex/reindex.prefixes-file.json:/config/reindex.prefixes-file.json:ro
+
+  search-live-indexing:
+    image: quay.io/alfresco/alfresco-elasticsearch-live-indexing:${SEARCH_LIVE_INDEXING_TAG}
+    depends_on:
+      opensearch:
+        condition: service_started
+      alfresco:
+        condition: service_healthy
+      search-reindexing:
+        condition: service_completed_successfully
+    environment:
+      SPRING_ELASTICSEARCH_REST_URIS: http://opensearch:9200
+      ALFRESCO_REPOSITORY_URL: http://alfresco:8080/alfresco
+      ALFRESCO_REPOSITORY_USERNAME: ${ALFRESCO_ADMIN_USER}
+      ALFRESCO_REPOSITORY_PASSWORD: ${ALFRESCO_ADMIN_PASSWORD}

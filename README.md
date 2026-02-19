@@ -147,6 +147,8 @@ flowchart LR
   repo --> os["opensearch"]
   reidx["search-reindexing"] --> db
   reidx --> os
+  live["search-live-indexing"] --> os
+  reidx -. "completes first" .-> live
 ```
 
 **Start**
@@ -156,16 +158,20 @@ docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml down
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml up -d
 ```
 
-**Validate (Repo + DB + OpenSearch + Reindexing service)**
+**Validate (Repo + DB + OpenSearch + Reindexing -> Live Indexing sequence)**
 
 ```bash
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml ps \
-  postgres alfresco opensearch search-reindexing
+  postgres alfresco opensearch search-reindexing search-live-indexing
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T postgres \
   sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
 curl -f http://localhost:${REPO_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T opensearch \
   curl -fsS http://localhost:9200/_cluster/health
+# Reindex should run first and complete (exit 0)
+docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml ps search-reindexing
+# After reindex completes, live indexing should be running
+docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml ps search-live-indexing
 ```
 
 ### Step 4 - Stage 04 (Direct Transform Core AIO)

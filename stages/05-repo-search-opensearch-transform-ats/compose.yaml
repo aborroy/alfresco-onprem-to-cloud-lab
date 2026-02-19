@@ -100,13 +100,24 @@ services:
         -Dcsrf.filter.enabled=false
     volumes:
       - ./data/alf_data:/usr/local/tomcat/alf_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 1m
 
   search-live-indexing:
     image: quay.io/alfresco/alfresco-elasticsearch-live-indexing:${SEARCH_LIVE_INDEXING_TAG}
     depends_on:
-      - opensearch
-      - activemq
-      - alfresco
+      opensearch:
+        condition: service_started
+      activemq:
+        condition: service_started
+      alfresco:
+        condition: service_healthy
+      search-reindexing:
+        condition: service_completed_successfully
     environment:
       SPRING_ELASTICSEARCH_REST_URIS: http://opensearch:9200
       SPRING_ACTIVEMQ_BROKERURL: failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true
@@ -115,10 +126,15 @@ services:
 
   search-reindexing:
     image: quay.io/alfresco/alfresco-elasticsearch-reindexing:${SEARCH_REINDEXING_TAG}
+    # One-shot bootstrap job: retry transient failures, then exit permanently on success.
+    restart: on-failure:5
     depends_on:
-      - postgres
-      - opensearch
-      - alfresco
+      postgres:
+        condition: service_started
+      opensearch:
+        condition: service_started
+      alfresco:
+        condition: service_healthy
     environment:
       ALFRESCO_ACCEPTED_CONTENT_MEDIA_TYPES_CACHE_BASE_URL: http://transform-core-aio:8090/transform/config
       SPRING_ACTIVEMQ_BROKERURL: nio://activemq:61616
