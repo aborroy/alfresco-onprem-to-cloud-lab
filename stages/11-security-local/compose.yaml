@@ -175,7 +175,7 @@ services:
     image: local/alfresco-content-repository-addons:${ACS_TAG}
     build:
       context: .
-      dockerfile: ./alfresco/Dockerfile
+      dockerfile: ../../shared/addons/alfresco/Dockerfile
       args:
         ACS_TAG: ${ACS_TAG}
     deploy:
@@ -319,7 +319,7 @@ services:
       ALFRESCO_REINDEX_FROM_ID: 1
       ALFRESCO_REINDEX_TO_ID: 100000000
     volumes:
-      - ../03-repo-search-opensearch/reindex/reindex.prefixes-file.json:/config/reindex.prefixes-file.json:ro
+      - ../../shared/reindex/reindex.prefixes-file.json:/config/reindex.prefixes-file.json:ro
 
   digital-workspace:
     image: quay.io/alfresco/alfresco-digital-workspace:${ADW_TAG}
@@ -351,7 +351,7 @@ services:
     image: local/alfresco-share-addons:${SHARE_TAG}
     build:
       context: .
-      dockerfile: ./share/Dockerfile
+      dockerfile: ../../shared/addons/share/Dockerfile
       args:
         SHARE_TAG: ${SHARE_TAG}
     deploy:

@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-REPO_AMPS_DIR="${SCRIPT_DIR}/addons/repository/amps"
-REPO_JARS_DIR="${SCRIPT_DIR}/addons/repository/jars"
-SHARE_AMPS_DIR="${SCRIPT_DIR}/addons/share/amps"
-SHARE_JARS_DIR="${SCRIPT_DIR}/addons/share/jars"
+# Run this script from the stage directory you want to populate:
+#   cd stages/09-addons
+#   ../../shared/fetch-addons.sh
+#
+# Addon files are downloaded relative to the current working directory.
+
+TARGET_DIR="${PWD}"
+REPO_AMPS_DIR="${TARGET_DIR}/addons/repository/amps"
+REPO_JARS_DIR="${TARGET_DIR}/addons/repository/jars"
+SHARE_AMPS_DIR="${TARGET_DIR}/addons/share/amps"
+SHARE_JARS_DIR="${TARGET_DIR}/addons/share/jars"
 
 FORCE=0
 
@@ -110,7 +116,7 @@ fetch_addon() {
     return 0
   fi
 
-  assets_to_download="$(printf '%s\n' "${assets}" | grep -E -i "${regex}" | grep -E -i '\\.(amp|jar)(\\?.*)?$' | sort -u || true)"
+  assets_to_download="$(printf '%s\n' "${assets}" | grep -E -i "${regex}" | grep -E -i '\.(amp|jar)(\?.*)?$' | sort -u || true)"
 
   if [[ -z "${assets_to_download}" ]]; then
     warn "no matching AMP/JAR assets with regex: ${regex}"
@@ -125,7 +131,7 @@ fetch_addon() {
 }
 
 cat <<'BANNER'
-Stage 07 Addons Fetcher
+Alfresco Addons Fetcher
 
 Downloads addon AMP/JAR artifacts into:
 - addons/repository/amps
@@ -139,16 +145,16 @@ BANNER
 # Addon list aligned with alfresco-ubuntu-installer/ADDONS.md
 # Regexes are intentionally broad to tolerate upstream naming differences.
 
-fetch_addon "Google Docs Integration (3.1.0)" "Alfresco/googledrive" "3.1.0" '(google|googledocs|drive)'
-fetch_addon "OOTBee Support Tools (1.2.2.0)" "OrderOfTheBee/ootbee-support-tools" "1.2.2.0" '(support-tools|ootbee)'
-fetch_addon "Javascript Console (0.7)" "share-extras/js-console" "0.7" '(javascript-console|js-console)'
-fetch_addon "Share Site Creators (0.0.8)" "aborroy/share-site-creators" "0.0.8" '(site-creators|share-site-creators)'
-fetch_addon "Share Site Space Templates (1.1.4-SNAPSHOT)" "jpotts/share-site-space-templates" "1.1.4-SNAPSHOT" '(site-space-templates|space-templates)'
-fetch_addon "Share Online Edition Addon (0.3.0)" "zylklab/alfresco-share-online-edition-addon" "0.3.0" '(online-edition|libreoffice|share-online)'
-fetch_addon "ESign Certification Addon (1.8.4)" "ambientelivre/alfresco-esign-cert" "1.8.4" '(esign|cert)'
-fetch_addon "Alfresco PDF Toolkit (1.4)" "OrderOfTheBee/alfresco-pdf-toolkit" "1.4" '(pdf-toolkit|pdftoolkit|pdf)'
-fetch_addon "Alfresco T-Engine OCR Addon" "aborroy/alf-tengine-ocr" "1.0.0" '(ocr|tengine)'
+fetch_addon "Google Docs Integration (3.1.0)"              "Alfresco/googledrive"                        "3.1.0"          '(google|googledocs|drive)'
+fetch_addon "OOTBee Support Tools (1.2.2.0)"               "OrderOfTheBee/ootbee-support-tools"          "1.2.2.0"        '(support-tools|ootbee)'
+fetch_addon "Javascript Console (0.7)"                     "share-extras/js-console"                     "0.7"            '(javascript-console|js-console)'
+fetch_addon "Share Site Creators (0.0.8)"                  "aborroy/share-site-creators"                 "0.0.8"          '(site-creators|share-site-creators)'
+fetch_addon "Share Site Space Templates (1.1.4-SNAPSHOT)"  "jpotts/share-site-space-templates"           "1.1.4-SNAPSHOT" '(site-space-templates|space-templates)'
+fetch_addon "Share Online Edition Addon (0.3.0)"           "zylklab/alfresco-share-online-edition-addon" "0.3.0"          '(online-edition|libreoffice|share-online)'
+fetch_addon "ESign Certification Addon (1.8.4)"            "ambientelivre/alfresco-esign-cert"           "1.8.4"          '(esign|cert)'
+fetch_addon "Alfresco PDF Toolkit (1.4)"                   "OrderOfTheBee/alfresco-pdf-toolkit"          "1.4"            '(pdf-toolkit|pdftoolkit|pdf)'
+fetch_addon "Alfresco T-Engine OCR Addon"                  "aborroy/alf-tengine-ocr"                     "1.0.0"          '(ocr|tengine)'
 
 log ""
 log "done"
-log "review downloaded files under ${SCRIPT_DIR}/addons before building Stage 07."
+log "review downloaded files under ${TARGET_DIR}/addons before building."

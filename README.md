@@ -1,4 +1,4 @@
-# Hands on Lab: Alfresco On-prem to Cloud-Ready (23.3 Community -> 25 Enterprise)
+# Hands on Lab: Alfresco On-prem to Cloud-Ready
 
 By the end of this lab, you should be able to:
 
@@ -350,7 +350,7 @@ Follow [stages/09-addons/ADDONS.md](stages/09-addons/ADDONS.md), then:
 
 ```bash
 cd stages/09-addons
-./fetch-addons.sh
+../../shared/fetch-addons.sh
 cd ../..
 docker compose --env-file .env -f stages/08-best-practices/compose.yaml down
 docker compose --env-file .env -f stages/09-addons/compose.yaml up -d --build
@@ -364,7 +364,7 @@ docker compose --env-file .env -f stages/09-addons/compose.yaml exec -T postgres
   sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
 docker compose --env-file .env -f stages/09-addons/compose.yaml exec -T opensearch \
   curl -fsS http://localhost:9200/_cluster/health
-docker image ls --format '{{.Repository}}:{{.Tag}}' | rg 'local/alfresco-content-repository-addons|local/alfresco-share-addons'
+docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E 'local/alfresco-content-repository-addons|local/alfresco-share-addons'
 curl -f http://localhost:${PROXY_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
 curl -f http://localhost:${PROXY_HTTP_PORT}/workspace
 curl -f http://localhost:${PROXY_HTTP_PORT}/share

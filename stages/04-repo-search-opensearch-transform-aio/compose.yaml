@@ -78,4 +78,4 @@ services:
       ALFRESCO_REINDEX_FROM_ID: 1
       ALFRESCO_REINDEX_TO_ID: 100000000
     volumes:
-      - ../03-repo-search-opensearch/reindex/reindex.prefixes-file.json:/config/reindex.prefixes-file.json:ro
+      - ../../shared/reindex/reindex.prefixes-file.json:/config/reindex.prefixes-file.json:ro

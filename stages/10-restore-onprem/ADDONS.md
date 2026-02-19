@@ -13,14 +13,14 @@ You can fetch artifacts automatically:
 
 ```bash
 cd stages/10-restore-onprem
-./fetch-addons.sh
+../../shared/fetch-addons.sh
 ```
 
 Re-download all files:
 
 ```bash
 cd stages/10-restore-onprem
-./fetch-addons.sh --force
+../../shared/fetch-addons.sh --force
 ```
 
 The script is best-effort. If an addon asset cannot be resolved from GitHub

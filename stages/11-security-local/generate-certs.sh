@@ -23,7 +23,8 @@ fi
 openssl req -x509 -nodes -days "${DAYS}" -newkey rsa:2048 \
   -keyout "${KEY_FILE}" \
   -out "${CRT_FILE}" \
-  -subj "/C=US/ST=Local/L=Local/O=Alfresco/CN=${SERVER_NAME}"
+  -subj "/C=US/ST=Local/L=Local/O=Alfresco/CN=${SERVER_NAME}" \
+  -addext "subjectAltName=DNS:${SERVER_NAME},IP:127.0.0.1"
 
 chmod 600 "${KEY_FILE}"
 chmod 644 "${CRT_FILE}"
