@@ -65,6 +65,8 @@ Then start the next stage.
 
 ### Step 1 - Stage 01 (Repository + PostgreSQL)
 
+Docker Compose baseline directives `services`, `image`, `environment`, `depends_on`, `ports`, and `volumes`.
+
 ```mermaid
 flowchart LR
   user["User"] --> repo["alfresco"]
@@ -140,14 +142,19 @@ expected
 
 ### Step 3 - Stage 03 (Switch to OpenSearch)
 
+Docker Compose introduces `healthcheck`, conditional `depends_on` (`condition: ...`), and `restart: on-failure:5` for the one-shot reindex job.
+
 ```mermaid
 flowchart LR
   user["User"] --> repo["alfresco"]
   repo --> db["postgres"]
   repo --> os["opensearch"]
+  repo --> mq["activemq"]
   reidx["search-reindexing"] --> db
   reidx --> os
+  reidx --> mq
   live["search-live-indexing"] --> os
+  live --> mq
   reidx -. "completes first" .-> live
 ```
 
@@ -158,16 +165,17 @@ docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml down
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml up -d
 ```
 
-**Validate (Repo + DB + OpenSearch + Reindexing -> Live Indexing sequence)**
+**Validate (Repo + DB + OpenSearch + ActiveMQ + Reindexing -> Live Indexing sequence)**
 
 ```bash
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml ps \
-  postgres alfresco opensearch search-reindexing search-live-indexing
+  postgres alfresco opensearch activemq search-reindexing search-live-indexing
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T postgres \
   sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
 curl -f http://localhost:${REPO_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T opensearch \
   curl -fsS http://localhost:9200/_cluster/health
+curl -f http://localhost:${ACTIVEMQ_WEB_PORT}
 # Reindex should run first and complete (exit 0)
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml ps search-reindexing
 # After reindex completes, live indexing should be running
@@ -181,9 +189,11 @@ flowchart LR
   user["User"] --> repo["alfresco"]
   repo --> db["postgres"]
   repo --> os["opensearch"]
+  repo --> mq["activemq"]
   repo --> aio["transform-core-aio"]
   reidx["search-reindexing"] --> db
   reidx --> os
+  reidx --> mq
 ```
 
 **Start**
@@ -193,16 +203,17 @@ docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml 
 docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml up -d
 ```
 
-**Validate (Repo + DB + OpenSearch + Transform Core AIO)**
+**Validate (Repo + DB + OpenSearch + ActiveMQ + Transform Core AIO)**
 
 ```bash
 docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml ps \
-  postgres alfresco opensearch transform-core-aio search-reindexing
+  postgres alfresco opensearch activemq transform-core-aio search-reindexing search-live-indexing
 docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml exec -T postgres \
   sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
 curl -f http://localhost:${REPO_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
 docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml exec -T opensearch \
   curl -fsS http://localhost:9200/_cluster/health
+curl -f http://localhost:${ACTIVEMQ_WEB_PORT}
 ```
 
 ### Step 5 - Stage 05 (Switch to ATS Async Transform)
@@ -321,6 +332,8 @@ curl -f http://localhost:${PROXY_HTTP_PORT}/share
 
 ### Step 8 - Stage 08 (Best-Practice Runtime Controls)
 
+Docker Compose introduces `deploy.resources`, `restart`, broader `healthcheck` usage, `depends_on` with `service_healthy`, plus host/runtime directives `command`, `ulimits`, and `cap_add`.
+
 ```mermaid
 flowchart LR
   user["User"] --> proxy["proxy nginx"]
@@ -357,6 +370,8 @@ curl -f http://localhost:${PROXY_HTTP_PORT}/share
 ```
 
 ### Step 9 - Stage 09 (Install Addons)
+
+Docker Compose introduces `build` (`context`, `dockerfile`, `args`) for custom addon images.
 
 ```mermaid
 flowchart LR
