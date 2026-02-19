@@ -13,7 +13,8 @@ services:
   opensearch:
     image: opensearchproject/opensearch:${OPENSEARCH_TAG}
     environment:
-      plugins.security.disabled: "true"
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
       discovery.type: single-node
       OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
     volumes:
@@ -89,7 +90,7 @@ services:
         -Delasticsearch.host=opensearch
         -Delasticsearch.port=9200
         -Delasticsearch.secureComms=none
-        -Dmessaging.broker.url=failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true
+        -Dmessaging.broker.url="failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true"
         -Dmessaging.broker.username=${ACTIVEMQ_USERNAME}
         -Dmessaging.broker.password=${ACTIVEMQ_PASSWORD}
         -Dtransform.service.enabled=true

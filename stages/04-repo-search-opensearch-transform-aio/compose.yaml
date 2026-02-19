@@ -14,7 +14,8 @@ services:
     image: opensearchproject/opensearch:${OPENSEARCH_TAG}
     environment:
       discovery.type: single-node
-      plugins.security.disabled: "true"
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
       OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
     volumes:
       - ./data/opensearch:/usr/share/opensearch/data
@@ -61,7 +62,7 @@ services:
         -Delasticsearch.port=9200
         -Delasticsearch.secureComms=none
         -Dalfresco.events.include=
-        -Dmessaging.broker.url=failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true
+        -Dmessaging.broker.url="failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true"
         -Dmessaging.broker.username=${ACTIVEMQ_USERNAME}
         -Dmessaging.broker.password=${ACTIVEMQ_PASSWORD}
         -DlocalTransform.core-aio.url=http://transform-core-aio:8090/
