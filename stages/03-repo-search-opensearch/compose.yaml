@@ -19,11 +19,20 @@ services:
     volumes:
       - ./data/opensearch:/usr/share/opensearch/data
 
+  activemq:
+    image: quay.io/alfresco/alfresco-activemq:${ACTIVEMQ_TAG}
+    ports:
+      - "${ACTIVEMQ_WEB_PORT}:8161"
+    environment:
+      ACTIVEMQ_USERNAME: ${ACTIVEMQ_USERNAME}
+      ACTIVEMQ_PASSWORD: ${ACTIVEMQ_PASSWORD}
+
   alfresco:
     image: quay.io/alfresco/alfresco-content-repository:${ACS_TAG}
     depends_on:
       - postgres
       - opensearch
+      - activemq
     ports:
       - "${REPO_HTTP_PORT}:8080"
     environment:
@@ -48,7 +57,9 @@ services:
         -Delasticsearch.port=9200
         -Delasticsearch.secureComms=none
         -Dalfresco.events.include=
-        -Dmessaging.subsystem.autoStart=false
+        -Dmessaging.broker.url=failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true
+        -Dmessaging.broker.username=${ACTIVEMQ_USERNAME}
+        -Dmessaging.broker.password=${ACTIVEMQ_PASSWORD}
         -Dlocal.transform.service.enabled=false
         -Dcsrf.filter.enabled=false
         -Ddeployment.method=DOCKER_COMPOSE
@@ -73,9 +84,12 @@ services:
         condition: service_started
       opensearch:
         condition: service_started
+      activemq:
+        condition: service_started
       alfresco:
         condition: service_healthy
     environment:
+      SPRING_ACTIVEMQ_BROKERURL: nio://activemq:61616
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
@@ -92,11 +106,14 @@ services:
     depends_on:
       opensearch:
         condition: service_started
+      activemq:
+        condition: service_started
       alfresco:
         condition: service_healthy
       search-reindexing:
         condition: service_completed_successfully
     environment:
+      SPRING_ACTIVEMQ_BROKERURL: failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true
       SPRING_ELASTICSEARCH_REST_URIS: http://opensearch:9200
       ALFRESCO_REPOSITORY_URL: http://alfresco:8080/alfresco
       ALFRESCO_REPOSITORY_USERNAME: ${ALFRESCO_ADMIN_USER}
