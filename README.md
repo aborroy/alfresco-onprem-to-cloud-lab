@@ -228,17 +228,22 @@ docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml 
 docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml up
 ```
 
-**Validate (Repo + DB + OpenSearch + ActiveMQ + Transform Core AIO)**
+Validate DB and Repository (instructions above)
+
+Validate Search (instructions above, including OpenSearch API and Alfresco API)
+
+Validate Transform (new in this step)
 
 ```bash
-docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml ps \
-  postgres alfresco opensearch activemq transform-core-aio search-reindexing search-live-indexing
-docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml exec -T postgres \
-  sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-curl -f http://localhost:${REPO_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
-docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml exec -T opensearch \
-  curl -fsS http://localhost:9200/_cluster/health
-curl -f http://localhost:${ACTIVEMQ_WEB_PORT}
+docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml ps transform-core-aio
+docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml exec -T transform-core-aio \
+  curl -f http://localhost:8090/ready
+```
+
+expected
+
+```text
+transform-core-aio is Up, and /ready returns HTTP 200
 ```
 
 ### Step 5 - Stage 05 (Switch to ATS Async Transform)
@@ -268,18 +273,26 @@ docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio
 docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml up -d
 ```
 
-**Validate (Repo + DB + OpenSearch + ATS services)**
+Validate DB and Repository (instructions above)
+
+Validate Search (instructions above, including OpenSearch API and Alfresco API)
+
+Validate Transform (new in this step: ATS async)
 
 ```bash
 docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml ps \
-  postgres alfresco opensearch activemq shared-file-store transform-core-aio transform-router \
-  search-live-indexing search-reindexing
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml exec -T postgres \
-  sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-curl -f http://localhost:${REPO_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml exec -T opensearch \
-  curl -fsS http://localhost:9200/_cluster/health
+  activemq shared-file-store transform-core-aio transform-router
 curl -f http://localhost:${ACTIVEMQ_WEB_PORT}
+docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml exec -T shared-file-store \
+  curl -f http://localhost:8099/ready
+docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml exec -T transform-router \
+  curl -f http://localhost:8095/actuator/health
+```
+
+expected
+
+```text
+ATS services are Up, ActiveMQ web is reachable, SFS /ready and T-Router /actuator/health return HTTP 200
 ```
 
 ### Step 6 - Stage 06 (Full Stack Without Proxy)
@@ -304,19 +317,24 @@ docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats
 docker compose --env-file .env -f stages/06-full-stack/compose.yaml up -d
 ```
 
-**Validate (Repo + DB + Search + Transform + UI)**
+Validate DB and Repository (instructions above)
+
+Validate Search (instructions above, including OpenSearch API and Alfresco API)
+
+Validate Transform (instructions above)
+
+Validate UI (new in this step)
 
 ```bash
-docker compose --env-file .env -f stages/06-full-stack/compose.yaml ps \
-  postgres alfresco opensearch activemq transform-router transform-core-aio \
-  shared-file-store search-live-indexing search-reindexing digital-workspace share
-docker compose --env-file .env -f stages/06-full-stack/compose.yaml exec -T postgres \
-  sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-curl -f http://localhost:${REPO_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
-docker compose --env-file .env -f stages/06-full-stack/compose.yaml exec -T opensearch \
-  curl -fsS http://localhost:9200/_cluster/health
+docker compose --env-file .env -f stages/06-full-stack/compose.yaml ps digital-workspace share
 curl -f http://localhost:${ADW_HTTP_PORT}/
 curl -f http://localhost:${SHARE_HTTP_PORT}/share
+```
+
+expected
+
+```text
+digital-workspace and share are Up, and both HTTP endpoints return 200/302
 ```
 
 ### Step 7 - Stage 07 (Add Reverse Proxy)
@@ -340,19 +358,27 @@ docker compose --env-file .env -f stages/06-full-stack/compose.yaml down
 docker compose --env-file .env -f stages/07-full-stack-proxy/compose.yaml up -d
 ```
 
-**Validate (Previous services + Proxy)**
+Validate DB and Repository (instructions above)
+
+Validate Search (instructions above, including OpenSearch API and Alfresco API)
+
+Validate Transform (instructions above)
+
+Validate UI (instructions above)
+
+Validate Proxy (new in this step)
 
 ```bash
-docker compose --env-file .env -f stages/07-full-stack-proxy/compose.yaml ps \
-  postgres alfresco opensearch activemq transform-router transform-core-aio \
-  shared-file-store search-live-indexing search-reindexing digital-workspace share proxy
-docker compose --env-file .env -f stages/07-full-stack-proxy/compose.yaml exec -T postgres \
-  sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-docker compose --env-file .env -f stages/07-full-stack-proxy/compose.yaml exec -T opensearch \
-  curl -fsS http://localhost:9200/_cluster/health
+docker compose --env-file .env -f stages/07-full-stack-proxy/compose.yaml ps proxy
 curl -f http://localhost:${PROXY_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
 curl -f http://localhost:${PROXY_HTTP_PORT}/workspace
 curl -f http://localhost:${PROXY_HTTP_PORT}/share
+```
+
+expected
+
+```text
+proxy is Up and all routes respond through port ${PROXY_HTTP_PORT}
 ```
 
 ### Step 8 - Stage 08 (Best-Practice Runtime Controls)
@@ -381,17 +407,27 @@ docker compose --env-file .env -f stages/07-full-stack-proxy/compose.yaml down
 docker compose --env-file .env -f stages/08-best-practices/compose.yaml up -d
 ```
 
-**Validate (Same services, now with healthchecks/resources/dependencies)**
+Validate DB and Repository (instructions above)
+
+Validate Search (instructions above, including OpenSearch API and Alfresco API)
+
+Validate Transform (instructions above)
+
+Validate UI and Proxy (instructions above)
+
+Validate Runtime Controls (new in this step)
 
 ```bash
 docker compose --env-file .env -f stages/08-best-practices/compose.yaml ps
-docker compose --env-file .env -f stages/08-best-practices/compose.yaml exec -T postgres \
-  sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-docker compose --env-file .env -f stages/08-best-practices/compose.yaml exec -T opensearch \
-  curl -fsS http://localhost:9200/_cluster/health
-curl -f http://localhost:${PROXY_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
-curl -f http://localhost:${PROXY_HTTP_PORT}/workspace
-curl -f http://localhost:${PROXY_HTTP_PORT}/share
+docker compose --env-file .env -f stages/08-best-practices/compose.yaml ps | grep -E "healthy|running"
+docker compose --env-file .env -f stages/08-best-practices/compose.yaml config | grep -En \
+  "deploy:|resources:|healthcheck:|restart:|condition: service_healthy"
+```
+
+expected
+
+```text
+core services report healthy/running and compose config contains deploy/resources/healthcheck/restart/service_healthy directives
 ```
 
 ### Step 9 - Stage 09 (Install Addons)
@@ -422,18 +458,26 @@ docker compose --env-file .env -f stages/08-best-practices/compose.yaml down
 docker compose --env-file .env -f stages/09-addons/compose.yaml up -d --build
 ```
 
-**Validate (Previous services + custom addon images)**
+Validate DB and Repository (instructions above)
+
+Validate Search (instructions above, including OpenSearch API and Alfresco API)
+
+Validate Transform (instructions above)
+
+Validate UI and Proxy (instructions above)
+
+Validate Addons Build (new in this step)
 
 ```bash
-docker compose --env-file .env -f stages/09-addons/compose.yaml ps
-docker compose --env-file .env -f stages/09-addons/compose.yaml exec -T postgres \
-  sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-docker compose --env-file .env -f stages/09-addons/compose.yaml exec -T opensearch \
-  curl -fsS http://localhost:9200/_cluster/health
-docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E 'local/alfresco-content-repository-addons|local/alfresco-share-addons'
-curl -f http://localhost:${PROXY_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
-curl -f http://localhost:${PROXY_HTTP_PORT}/workspace
-curl -f http://localhost:${PROXY_HTTP_PORT}/share
+docker compose --env-file .env -f stages/09-addons/compose.yaml ps alfresco share
+docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E \
+  'local/alfresco-content-repository-addons|local/alfresco-share-addons'
+```
+
+expected
+
+```text
+alfresco/share are Up and local addon images are present
 ```
 
 ### Step 10 - Stage 10 (Restore On-Prem Data and Reindex)
@@ -465,17 +509,26 @@ docker compose --env-file .env -f stages/09-addons/compose.yaml down
 docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml up -d --build
 ```
 
-**Validate (Restored DB/content/config + full stack)**
+Validate DB and Repository (instructions above)
+
+Validate Search (instructions above, including OpenSearch API and Alfresco API)
+
+Validate Transform (instructions above)
+
+Validate UI and Proxy (instructions above)
+
+Validate Restore Inputs (new in this step)
 
 ```bash
-docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml ps
-docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml exec -T postgres \
-  sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml exec -T opensearch \
-  curl -fsS http://localhost:9200/_cluster/health
-curl -f http://localhost:${PROXY_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
-curl -f http://localhost:${PROXY_HTTP_PORT}/workspace
-curl -f http://localhost:${PROXY_HTTP_PORT}/share
+docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml exec -T alfresco sh -c \
+  'test -d /usr/local/tomcat/alf_data && test -d /usr/local/tomcat/shared/classes/alfresco/extension && echo "restore mounts present"'
+docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml ps search-reindexing search-live-indexing
+```
+
+expected
+
+```text
+restore mounts are present, reindexing runs/completes, and live indexing starts afterwards
 ```
 
 ### Step 11 - Stage 11 (Local Security Hardening)
@@ -504,17 +557,26 @@ docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml down
 docker compose --env-file .env -f stages/11-security-local/compose.yaml up -d --build
 ```
 
-**Validate (Previous services + TLS)**
+Validate DB and Repository (instructions above)
+
+Validate Search (instructions above, including OpenSearch API and Alfresco API)
+
+Validate Transform (instructions above)
+
+Validate UI and Proxy (instructions above)
+
+Validate TLS Security (new in this step)
 
 ```bash
-docker compose --env-file .env -f stages/11-security-local/compose.yaml ps
-docker compose --env-file .env -f stages/11-security-local/compose.yaml exec -T postgres \
-  sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-docker compose --env-file .env -f stages/11-security-local/compose.yaml exec -T opensearch \
-  curl -fsS http://localhost:9200/_cluster/health
 curl -k -f https://localhost:${PROXY_HTTPS_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
 curl -I http://localhost:${PROXY_HTTP_PORT} | head -n 1
 openssl s_client -connect localhost:${PROXY_HTTPS_PORT} -tls1_3
+```
+
+expected
+
+```text
+HTTPS probe succeeds, HTTP endpoint redirects, and TLS 1.3 handshake is established
 ```
 
 ### Step 12 - Stage 12 (Kubernetes Image Bakery Handoff)
