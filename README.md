@@ -65,7 +65,7 @@ Then start the next stage.
 
 ### Step 1 - Stage 01 (Repository + PostgreSQL)
 
-Docker Compose baseline directives `services`, `image`, `environment`, `depends_on`, `ports`, and `volumes`.
+> Docker Compose baseline directives `services`, `image`, `environment`, `depends_on`, `ports`, and `volumes`.
 
 ```mermaid
 flowchart LR
@@ -142,7 +142,7 @@ expected
 
 ### Step 3 - Stage 03 (Switch to OpenSearch)
 
-Docker Compose introduces `healthcheck`, conditional `depends_on` (`condition: ...`), and `restart: on-failure:5` for the one-shot reindex job.
+> Docker Compose introduces `healthcheck`, conditional `depends_on` (`condition: ...`), and `restart: on-failure:5` for the one-shot reindex job.
 
 ```mermaid
 flowchart LR
@@ -332,7 +332,7 @@ curl -f http://localhost:${PROXY_HTTP_PORT}/share
 
 ### Step 8 - Stage 08 (Best-Practice Runtime Controls)
 
-Docker Compose introduces `deploy.resources`, `restart`, broader `healthcheck` usage, `depends_on` with `service_healthy`, plus host/runtime directives `command`, `ulimits`, and `cap_add`.
+> Docker Compose introduces `deploy.resources`, `restart`, broader `healthcheck` usage, `depends_on` with `service_healthy`, plus host/runtime directives `command`, `ulimits`, and `cap_add`.
 
 ```mermaid
 flowchart LR
@@ -371,7 +371,7 @@ curl -f http://localhost:${PROXY_HTTP_PORT}/share
 
 ### Step 9 - Stage 09 (Install Addons)
 
-Docker Compose introduces `build` (`context`, `dockerfile`, `args`) for custom addon images.
+> Docker Compose introduces `build` (`context`, `dockerfile`, `args`) for custom addon images.
 
 ```mermaid
 flowchart LR
