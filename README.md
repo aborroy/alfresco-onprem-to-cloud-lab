@@ -238,7 +238,6 @@ Validate Search (instructions above, including OpenSearch API and Alfresco API)
 Validate Transform (new in this step)
 
 ```bash
-docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml ps transform-core-aio
 docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml exec -T transform-core-aio \
   curl -f http://localhost:8090/ready
 ```
@@ -275,7 +274,7 @@ flowchart LR
 
 ```bash
 docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml down
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml up -d
+docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml up
 ```
 
 Validate DB and Repository (instructions above)
@@ -285,9 +284,6 @@ Validate Search (instructions above, including OpenSearch API and Alfresco API)
 Validate Transform (new in this step: ATS async)
 
 ```bash
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml ps \
-  activemq shared-file-store transform-core-aio transform-router
-curl -f http://localhost:${ACTIVEMQ_WEB_PORT}
 docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml exec -T shared-file-store \
   curl -f http://localhost:8099/ready
 docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml exec -T transform-router \
@@ -297,7 +293,7 @@ docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats
 expected
 
 ```text
-ATS services are Up, ActiveMQ web is reachable, SFS /ready and T-Router /actuator/health return HTTP 200
+ATS services are Up, SFS /ready and T-Router /actuator/health return HTTP 200
 ```
 
 ### Step 6 - Stage 06 (Full Stack Without Proxy)
@@ -313,6 +309,12 @@ flowchart LR
   repo --> tr["transform-router"]
   tr --> aio["transform-core-aio"]
   tr --> sfs["shared-file-store"]
+  reidx["search-reindexing"] --> db
+  reidx --> os
+  reidx --> mq
+  live["search-live-indexing"] --> os
+  live --> mq
+  reidx -. "completes first" .-> live
 ```
 
 **Start**
@@ -325,6 +327,17 @@ docker compose --env-file .env -f stages/06-full-stack/compose.yaml up -d
 Validate DB and Repository (instructions above)
 
 Validate Search (instructions above, including OpenSearch API and Alfresco API)
+
+```bash
+docker compose --env-file .env -f stages/06-full-stack/compose.yaml ps \
+  search-reindexing search-live-indexing
+```
+
+expected
+
+```text
+search-reindexing runs and completes; search-live-indexing stays Up afterwards
+```
 
 Validate Transform (instructions above)
 
