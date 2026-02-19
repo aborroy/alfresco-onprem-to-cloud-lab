@@ -122,7 +122,7 @@ docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml up
 
 Validate DB and Repository (instructions above)
 
-Validata Search
+Validate Search
 
 ```bash
 curl -H "X-Alfresco-Search-Secret: secret" \
@@ -137,6 +137,26 @@ expected
     {"q":"*","rows":"1","wt":"json"}
   },
   ...
+}
+```
+
+Validate Search (Alfresco API)
+
+```bash
+curl -u "admin:admin" \
+  -H "Content-Type: application/json" \
+  -d '{"query":{"query":"test"},"paging":{"maxItems":1,"skipCount":0}}' \
+  "http://localhost:8080/alfresco/api/-default-/public/search/versions/1/search"
+```
+
+expected
+
+```json
+{
+  "list": {
+    "pagination": { "count": 0, ... },
+    "entries": [ ... ]
+  }
 }
 ```
 
@@ -162,24 +182,29 @@ flowchart LR
 
 ```bash
 docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml down
-docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml up -d
+docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml up
 ```
 
-**Validate (Repo + DB + OpenSearch + ActiveMQ + Reindexing -> Live Indexing sequence)**
+Validate DB and Repository (instructions above)
+
+Validate Search
 
 ```bash
-docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml ps \
-  postgres alfresco opensearch activemq search-reindexing search-live-indexing
-docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T postgres \
-  sh -c 'pg_isready -d "$POSTGRES_DB" -U "$POSTGRES_USER"'
-curl -f http://localhost:${REPO_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
-docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T opensearch \
-  curl -fsS http://localhost:9200/_cluster/health
-curl -f http://localhost:${ACTIVEMQ_WEB_PORT}
-# Reindex should run first and complete (exit 0)
-docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml ps search-reindexing
-# After reindex completes, live indexing should be running
-docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml ps search-live-indexing
+curl -u "admin:admin" \
+  -H "Content-Type: application/json" \
+  -d '{"query":{"query":"test"},"paging":{"maxItems":1,"skipCount":0}}' \
+  "http://localhost:8080/alfresco/api/-default-/public/search/versions/1/search"
+```
+
+expected
+
+```json
+{
+  "list": {
+    "pagination": { "count": 0, ... },
+    "entries": [ ... ]
+  }
+}
 ```
 
 ### Step 4 - Stage 04 (Direct Transform Core AIO)
@@ -200,7 +225,7 @@ flowchart LR
 
 ```bash
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml down
-docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml up -d
+docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml up
 ```
 
 **Validate (Repo + DB + OpenSearch + ActiveMQ + Transform Core AIO)**
