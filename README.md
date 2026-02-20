@@ -328,7 +328,7 @@ Validate Transform (instructions above)
 Validate UI (manual end-to-end)
 
 1. Open `http://localhost:8081/` (ADW) in your browser.
-2. Log in with `admin` / `admin`.
+2. Log in with credentials from `.env` (`ALFRESCO_ADMIN_USER` / `ALFRESCO_ADMIN_PASSWORD`, defaults usually `admin` / `admin`).
 3. Upload a new text document with a unique word in its body (for example: `stage06-e2e-2026`).
 4. Search in ADW for that unique word and open the returned document.
 5. Optionally repeat in Share at `http://localhost:8082/share` to confirm same result.

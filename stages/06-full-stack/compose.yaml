@@ -99,6 +99,12 @@ services:
         -Dlegacy.transform.service.enabled=false
         -DlocalTransform.core-aio.url=http://transform-core-aio:8090/
         -Dcsrf.filter.enabled=false
+        -Dcors.enabled=true
+        -Dcors.allowed.origins=http://localhost:${ADW_HTTP_PORT}
+        -Dcors.allowed.methods=GET,POST,PUT,DELETE,OPTIONS,HEAD
+        -Dcors.allowed.headers=Authorization,Content-Type,Accept,Origin,X-Requested-With
+        -Dcors.exposed.headers=Access-Control-Allow-Origin,Access-Control-Allow-Credentials
+        -Dcors.support.credentials=true
     volumes:
       - ./data/alf_data:/usr/local/tomcat/alf_data
     healthcheck:
@@ -157,9 +163,11 @@ services:
     ports:
       - "${ADW_HTTP_PORT}:8080"
     environment:
+      APP_CONFIG_PROVIDER: ECM
       APP_CONFIG_AUTH_TYPE: BASIC
       APP_CONFIG_ECM_HOST: http://localhost:${REPO_HTTP_PORT}
-      APP_CONFIG_PROVIDER: ALL
+      APP_CONFIG_PLUGIN_PROCESS_SERVICE: "false"
+      APP_CONFIG_PLUGIN_MICROSOFT_ONLINE: "false"
 
   share:
     image: quay.io/alfresco/alfresco-share:${SHARE_TAG}
