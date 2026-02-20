@@ -17,6 +17,8 @@ services:
       DISABLE_INSTALL_DEMO_CONFIG: "true"
       discovery.type: single-node
       OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
     volumes:
       - ./data/opensearch:/usr/share/opensearch/data
 

@@ -105,7 +105,7 @@ expected
 {"entry":{"message":"readyProbe: Success - Tested"}}
 ```
 
-### Step 2 - Stage 02 (Transform Core AIO, No Search)
+### Step 2 - Stage 02 (Transform Core AIO)
 
 ```mermaid
 flowchart LR
@@ -136,13 +136,7 @@ expected
 transform-core-aio is Up, and /ready returns HTTP 200
 ```
 
-Validate Search
-
-```text
-Not applicable in this step (`-Dindex.subsystem.name=noindex`).
-```
-
-### Step 3 - Stage 03 (Transform Service ATS, No Search)
+### Step 3 - Stage 03 (Transform Service ATS)
 
 ```mermaid
 flowchart LR
@@ -168,7 +162,7 @@ Validate DB and Repository (instructions above)
 Validate Transform (new in this step: ATS async)
 
 ```bash
-curl -f http://localhost:${ACTIVEMQ_WEB_PORT}
+curl -f http://localhost:8161
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T shared-file-store \
   curl -f http://localhost:8099/ready
 docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T transform-router \
@@ -179,12 +173,6 @@ expected
 
 ```text
 ATS services are Up, ActiveMQ web is reachable, and SFS/T-Router health endpoints return HTTP 200
-```
-
-Validate Search
-
-```text
-Not applicable in this step (`-Dindex.subsystem.name=noindex`).
 ```
 
 ### Step 4 - Stage 04 (Solr Search With ATS Content)
@@ -217,7 +205,7 @@ Validate Search (new in this step)
 
 ```bash
 curl -H "X-Alfresco-Search-Secret: secret" \
-  "http://localhost:${SOLR_HTTP_PORT}/solr/alfresco/select?q=*&rows=1&wt=json"
+  "http://localhost:8983/solr/alfresco/select?q=*&rows=1&wt=json"
 curl -u "admin:admin" \
   -H "Content-Type: application/json" \
   -d '{"query":{"query":"test"},"paging":{"maxItems":1,"skipCount":0}}' \
@@ -276,12 +264,9 @@ Validate Transform (instructions above)
 
 Validate Search (new in this step: OpenSearch migration)
 
-```bash
-# Reindex should run first and complete (exit 0)
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml ps search-reindexing
-# After reindex completes, live indexing should be running
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml ps search-live-indexing
+> After reindex completes, live indexing should be running
 
+```bash
 curl -H "Content-Type: application/json" \
   -d '{"query":{"match_all":{}},"size":1}' \
   "http://localhost:9200/alfresco/_search"
