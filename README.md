@@ -66,7 +66,7 @@ Then start the next stage.
 
 ### Step 1 - Stage 01 (Repository + PostgreSQL)
 
-> Docker Compose baseline directives `services`, `image`, `environment`, `depends_on`, `ports`, and `volumes`.
+> Docker Compose baseline directives [`services`](https://docs.docker.com/reference/compose-file/services/), [`image`](https://docs.docker.com/reference/compose-file/services/#image), [`environment`](https://docs.docker.com/reference/compose-file/services/#environment), [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on), [`ports`](https://docs.docker.com/reference/compose-file/services/#ports), and [`volumes`](https://docs.docker.com/reference/compose-file/services/#volumes).
 
 ```mermaid
 flowchart LR
@@ -163,7 +163,7 @@ expected
 
 ### Step 3 - Stage 03 (Switch to OpenSearch)
 
-> Docker Compose introduces `healthcheck`, conditional `depends_on` (`condition: ...`), and `restart: on-failure:5` for the one-shot reindex job.
+> Docker Compose introduces [`healthcheck`](https://docs.docker.com/reference/compose-file/services/#healthcheck), conditional [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on) (`condition: ...`), and [`restart`](https://docs.docker.com/reference/compose-file/services/#restart) (`on-failure:5`) for the one-shot reindex job.
 > OpenSearch indexing scope in this step: `metadata only` (content indexing is not available yet).
 
 ```mermaid
@@ -402,7 +402,7 @@ proxy is Up and all routes respond through port ${PROXY_HTTP_PORT}
 
 ### Step 8 - Stage 08 (Best-Practice Runtime Controls)
 
-> Docker Compose introduces `deploy.resources`, `restart`, broader `healthcheck` usage, `depends_on` with `service_healthy`, plus host/runtime directives `command`, `ulimits`, and `cap_add`.
+> Docker Compose introduces [`deploy`](https://docs.docker.com/reference/compose-file/services/#deploy)/[`resources`](https://docs.docker.com/reference/compose-file/deploy/#resources), [`restart`](https://docs.docker.com/reference/compose-file/services/#restart), broader [`healthcheck`](https://docs.docker.com/reference/compose-file/services/#healthcheck) usage, [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on) with `service_healthy`, plus host/runtime directives [`command`](https://docs.docker.com/reference/compose-file/services/#command), [`ulimits`](https://docs.docker.com/reference/compose-file/services/#ulimits), and [`cap_add`](https://docs.docker.com/reference/compose-file/services/#cap_add).
 
 ```mermaid
 flowchart LR
@@ -451,7 +451,7 @@ core services report healthy/running and compose config contains deploy/resource
 
 ### Step 9 - Stage 09 (Install Addons)
 
-> Docker Compose introduces `build` (`context`, `dockerfile`, `args`) for custom addon images.
+> Docker Compose introduces [`build`](https://docs.docker.com/reference/compose-file/services/#build) ([`context`](https://docs.docker.com/compose/compose-file/build/#context), [`dockerfile`](https://docs.docker.com/compose/compose-file/build/#dockerfile), [`args`](https://docs.docker.com/compose/compose-file/build/#args)) for custom addon images.
 
 ```mermaid
 flowchart LR
