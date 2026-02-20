@@ -31,10 +31,10 @@ docker compose version
 | Stage | File | Focus |
 |---|---|---|
 | `01-repo` | `stages/01-repo/compose.yaml` | Repository + PostgreSQL (no search) |
-| `02-repo-search-solr` | `stages/02-repo-search-solr/compose.yaml` | Legacy Solr search topology |
-| `03-repo-search-opensearch` | `stages/03-repo-search-opensearch/compose.yaml` | OpenSearch search topology + reindex (`metadata-only` indexing) |
-| `04-repo-search-opensearch-transform-aio` | `stages/04-repo-search-opensearch-transform-aio/compose.yaml` | Add direct `transform-core-aio` (`metadata-only` indexing) |
-| `05-repo-search-opensearch-transform-ats` | `stages/05-repo-search-opensearch-transform-ats/compose.yaml` | Switch to ATS async transform (ActiveMQ + SFS + T-Router) (`first step with metadata + content indexing`) |
+| `02-repo-search-solr` | `stages/02-repo-search-solr/compose.yaml` | Add Transform Core AIO (no search yet) |
+| `03-repo-search-opensearch` | `stages/03-repo-search-opensearch/compose.yaml` | Add ATS async transform (no search yet) |
+| `04-repo-search-opensearch-transform-aio` | `stages/04-repo-search-opensearch-transform-aio/compose.yaml` | Add Solr search on top of ATS (content indexing path) |
+| `05-repo-search-opensearch-transform-ats` | `stages/05-repo-search-opensearch-transform-ats/compose.yaml` | Migrate Solr -> OpenSearch with reindex + live indexing (content) |
 | `06-full-stack` | `stages/06-full-stack/compose.yaml` | Add ADW + Share |
 | `07-full-stack-proxy` | `stages/07-full-stack-proxy/compose.yaml` | Add reverse proxy |
 | `08-best-practices` | `stages/08-best-practices/compose.yaml` | Healthchecks/resources/depends_on patterns |
@@ -105,13 +105,13 @@ expected
 {"entry":{"message":"readyProbe: Success - Tested"}}
 ```
 
-### Step 2 - Stage 02 (Legacy Solr Search)
+### Step 2 - Stage 02 (Transform Core AIO, No Search)
 
 ```mermaid
 flowchart LR
   user["User"] --> repo["alfresco"]
   repo --> db["postgres"]
-  repo --> solr["solr6"]
+  repo --> aio["transform-core-aio"]
 ```
 
 Start
@@ -123,61 +123,37 @@ docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml up
 
 Validate DB and Repository (instructions above)
 
+Validate Transform
+
+```bash
+docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml exec -T transform-core-aio \
+  curl -f http://localhost:8090/ready
+```
+
+expected
+
+```text
+transform-core-aio is Up, and /ready returns HTTP 200
+```
+
 Validate Search
 
-```bash
-curl -H "X-Alfresco-Search-Secret: secret" \
-  "http://localhost:8983/solr/alfresco/select?q=*&rows=1&wt=json"
+```text
+Not applicable in this step (`-Dindex.subsystem.name=noindex`).
 ```
 
-expected
-
-```json
-{ "responseHeader":
-  {"status":0,"QTime":61,"params":
-    {"q":"*","rows":"1","wt":"json"}
-  },
-  ...
-}
-```
-
-Validate Search (Alfresco API)
-
-```bash
-curl -u "admin:admin" \
-  -H "Content-Type: application/json" \
-  -d '{"query":{"query":"test"},"paging":{"maxItems":1,"skipCount":0}}' \
-  "http://localhost:8080/alfresco/api/-default-/public/search/versions/1/search"
-```
-
-expected
-
-```json
-{
-  "list": {
-    "pagination": { "count": 0, ... },
-    "entries": [ ... ]
-  }
-}
-```
-
-### Step 3 - Stage 03 (Switch to OpenSearch)
-
-> Docker Compose introduces [`healthcheck`](https://docs.docker.com/reference/compose-file/services/#healthcheck), conditional [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on) (`condition: ...`), and [`restart`](https://docs.docker.com/reference/compose-file/services/#restart) (`on-failure:5`) for the one-shot reindex job.
-> OpenSearch indexing scope in this step: `metadata only` (content indexing is not available yet).
+### Step 3 - Stage 03 (Transform Service ATS, No Search)
 
 ```mermaid
 flowchart LR
   user["User"] --> repo["alfresco"]
   repo --> db["postgres"]
-  repo --> os["opensearch"]
   repo --> mq["activemq"]
-  reidx["search-reindexing"] --> db
-  reidx --> os
-  reidx --> mq
-  live["search-live-indexing"] --> os
-  live --> mq
-  reidx -. "completes first" .-> live
+  repo --> tr["transform-router"]
+  tr --> aio["transform-core-aio"]
+  tr --> sfs["shared-file-store"]
+  aio --> mq
+  aio --> sfs
 ```
 
 **Start**
@@ -189,40 +165,41 @@ docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml 
 
 Validate DB and Repository (instructions above)
 
-Validate Search
+Validate Transform (new in this step: ATS async)
 
 ```bash
-curl -u "admin:admin" \
-  -H "Content-Type: application/json" \
-  -d '{"query":{"query":"test"},"paging":{"maxItems":1,"skipCount":0}}' \
-  "http://localhost:8080/alfresco/api/-default-/public/search/versions/1/search"
+curl -f http://localhost:${ACTIVEMQ_WEB_PORT}
+docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T shared-file-store \
+  curl -f http://localhost:8099/ready
+docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T transform-router \
+  curl -f http://localhost:8095/actuator/health
 ```
 
 expected
 
-```json
-{
-  "list": {
-    "pagination": { "count": 0, ... },
-    "entries": [ ... ]
-  }
-}
+```text
+ATS services are Up, ActiveMQ web is reachable, and SFS/T-Router health endpoints return HTTP 200
 ```
 
-### Step 4 - Stage 04 (Direct Transform Core AIO)
+Validate Search
 
-> OpenSearch indexing scope in this step: `metadata only` (still no ATS async transform pipeline).
+```text
+Not applicable in this step (`-Dindex.subsystem.name=noindex`).
+```
+
+### Step 4 - Stage 04 (Solr Search With ATS Content)
 
 ```mermaid
 flowchart LR
   user["User"] --> repo["alfresco"]
   repo --> db["postgres"]
-  repo --> os["opensearch"]
+  repo --> solr["solr6"]
   repo --> mq["activemq"]
-  repo --> aio["transform-core-aio"]
-  reidx["search-reindexing"] --> db
-  reidx --> os
-  reidx --> mq
+  repo --> tr["transform-router"]
+  tr --> aio["transform-core-aio"]
+  tr --> sfs["shared-file-store"]
+  aio --> mq
+  aio --> sfs
 ```
 
 **Start**
@@ -234,24 +211,38 @@ docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio
 
 Validate DB and Repository (instructions above)
 
-Validate Search (instructions above, including OpenSearch API and Alfresco API)
+Validate Transform (instructions above)
 
-Validate Transform (new in this step)
+Validate Search (new in this step)
 
 ```bash
-docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml exec -T transform-core-aio \
-  curl -f http://localhost:8090/ready
+curl -H "X-Alfresco-Search-Secret: secret" \
+  "http://localhost:${SOLR_HTTP_PORT}/solr/alfresco/select?q=*&rows=1&wt=json"
+curl -u "admin:admin" \
+  -H "Content-Type: application/json" \
+  -d '{"query":{"query":"test"},"paging":{"maxItems":1,"skipCount":0}}' \
+  "http://localhost:8080/alfresco/api/-default-/public/search/versions/1/search"
 ```
 
 expected
 
-```text
-transform-core-aio is Up, and /ready returns HTTP 200
+```json
+{ "responseHeader": {"status": 0, ...}, ... }
 ```
 
-### Step 5 - Stage 05 (Switch to ATS Async Transform)
+```json
+{
+  "list": {
+    "pagination": { "count": ..., ... },
+    "entries": [ ... ]
+  }
+}
+```
 
-> OpenSearch indexing scope from this step onward: `metadata + content` (first step enabling full content indexing with OpenSearch).
+### Step 5 - Stage 05 (Migrate Solr to OpenSearch With ATS Content)
+
+> Docker Compose introduces [`healthcheck`](https://docs.docker.com/reference/compose-file/services/#healthcheck), conditional [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on) (`condition: ...`), and [`restart`](https://docs.docker.com/reference/compose-file/services/#restart) (`on-failure:5`) for the reindex/live-indexing sequence.
+> OpenSearch indexing scope from this step onward: `metadata + content`.
 
 ```mermaid
 flowchart LR
@@ -264,11 +255,12 @@ flowchart LR
   tr --> sfs["shared-file-store"]
   aio --> mq
   aio --> sfs
-  live["search-live-indexing"] --> os
-  live --> mq
   reidx["search-reindexing"] --> db
   reidx --> os
   reidx --> mq
+  live["search-live-indexing"] --> os
+  live --> mq
+  reidx -. "completes first" .-> live
 ```
 
 **Start**
@@ -280,21 +272,38 @@ docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats
 
 Validate DB and Repository (instructions above)
 
-Validate Search (instructions above, including OpenSearch API and Alfresco API)
+Validate Transform (instructions above)
 
-Validate Transform (new in this step: ATS async)
+Validate Search (new in this step: OpenSearch migration)
 
 ```bash
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml exec -T shared-file-store \
-  curl -f http://localhost:8099/ready
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml exec -T transform-router \
-  curl -f http://localhost:8095/actuator/health
+# Reindex should run first and complete (exit 0)
+docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml ps search-reindexing
+# After reindex completes, live indexing should be running
+docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml ps search-live-indexing
+
+curl -H "Content-Type: application/json" \
+  -d '{"query":{"match_all":{}},"size":1}' \
+  "http://localhost:9200/alfresco/_search"
+curl -u "admin:admin" \
+  -H "Content-Type: application/json" \
+  -d '{"query":{"query":"test"},"paging":{"maxItems":1,"skipCount":0}}' \
+  "http://localhost:8080/alfresco/api/-default-/public/search/versions/1/search"
 ```
 
 expected
 
-```text
-ATS services are Up, SFS /ready and T-Router /actuator/health return HTTP 200
+```json
+{ "hits": { "total": { "value": ..., ... }, "hits": [ ... ] } }
+```
+
+```json
+{
+  "list": {
+    "pagination": { "count": ..., ... },
+    "entries": [ ... ]
+  }
+}
 ```
 
 ### Step 6 - Stage 06 (Full Stack Without Proxy)
@@ -637,9 +646,9 @@ test -f ./helm-values.overrides.yaml && echo "helm overrides generated"
 
 ## Notes
 
-- Stage 02 (Solr) is included to cover legacy search topology in training.
-- Stage 03+ is the OpenSearch path aligned with ACS 25 migration goals.
-- Stage 04 vs Stage 05 separates direct core-aio from full ATS async orchestration.
+- Stage 02 and Stage 03 isolate transform topology first (core-aio then ATS) before introducing search.
+- Stage 04 introduces Solr search with ATS so students validate content search before migration.
+- Stage 05 performs Solr to OpenSearch migration using reindex + live indexing.
 
 ## References
 
