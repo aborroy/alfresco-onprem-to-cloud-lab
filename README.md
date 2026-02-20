@@ -28,13 +28,13 @@ docker compose version
 
 ## Stage Overview
 
-| Stage | File | Focus |
+| Stage (Learning Sequence) | Compose File | Focus |
 |---|---|---|
 | `01-repo` | `stages/01-repo/compose.yaml` | Repository + PostgreSQL (no search) |
-| `02-repo-search-solr` | `stages/02-repo-search-solr/compose.yaml` | Add Transform Core AIO (no search yet) |
-| `03-repo-search-opensearch` | `stages/03-repo-search-opensearch/compose.yaml` | Add ATS async transform (no search yet) |
-| `04-repo-search-opensearch-transform-aio` | `stages/04-repo-search-opensearch-transform-aio/compose.yaml` | Add Solr search on top of ATS (content indexing path) |
-| `05-repo-search-opensearch-transform-ats` | `stages/05-repo-search-opensearch-transform-ats/compose.yaml` | Migrate Solr -> OpenSearch with reindex + live indexing (content) |
+| `02-transform-core-aio` | `stages/02-repo-search-solr/compose.yaml` | Add Transform Core AIO (no search yet) |
+| `03-transform-service-ats` | `stages/03-repo-search-opensearch/compose.yaml` | Add ATS async transform (no search yet) |
+| `04-solr-search-with-ats` | `stages/04-repo-search-opensearch-transform-aio/compose.yaml` | Add Solr search on top of ATS (content indexing path) |
+| `05-opensearch-migration-with-ats` | `stages/05-repo-search-opensearch-transform-ats/compose.yaml` | Migrate Solr -> OpenSearch with reindex + live indexing (content) |
 | `06-full-stack` | `stages/06-full-stack/compose.yaml` | Add ADW + Share |
 | `07-full-stack-proxy` | `stages/07-full-stack-proxy/compose.yaml` | Add reverse proxy |
 | `08-best-practices` | `stages/08-best-practices/compose.yaml` | Healthchecks/resources/depends_on patterns |
