@@ -47,6 +47,7 @@ docker compose version
 
 - Stage 09 Addons: [stages/09-addons/ADDONS.md](stages/09-addons/ADDONS.md)
 - Stage 10 Restore: [stages/10-restore-onprem/RESTORE.md](stages/10-restore-onprem/RESTORE.md)
+- Stage 10 Addons: [stages/10-restore-onprem/ADDONS.md](stages/10-restore-onprem/ADDONS.md)
 - Stage 11 Security: [stages/11-security-local/SECURITY.md](stages/11-security-local/SECURITY.md)
 - Stage 12 Bakery: [stages/12-k8s-image-bakery/README.md](stages/12-k8s-image-bakery/README.md)
 
@@ -500,6 +501,11 @@ alfresco/share are Up and local addon images are present
 
 ### Step 10 - Stage 10 (Restore On-Prem Data and Reindex)
 
+> For real migrated data, install repository addon `model-ns-prefix-mapping` and
+> generate `shared/reindex/reindex.prefixes-file.json` from
+> `/alfresco/s/model/ns-prefix-map` before running reindexing.
+> Addon source: https://github.com/AlfrescoLabs/model-ns-prefix-mapping
+
 ```mermaid
 flowchart LR
   backup["on-prem backup"] --> importDb["import db dump"]
@@ -516,6 +522,7 @@ flowchart LR
 Use:
 
 - [stages/10-restore-onprem/RESTORE.md](stages/10-restore-onprem/RESTORE.md)
+- [stages/10-restore-onprem/ADDONS.md](stages/10-restore-onprem/ADDONS.md)
 - [alfresco-ubuntu-installer backup/restore reference](https://github.com/aborroy/alfresco-ubuntu-installer/blob/main/README.md#backup-and-restore)
 
 Then:
@@ -540,13 +547,14 @@ Validate Restore Inputs (new in this step)
 ```bash
 docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml exec -T alfresco sh -c \
   'test -d /usr/local/tomcat/alf_data && test -d /usr/local/tomcat/shared/classes/alfresco/extension && echo "restore mounts present"'
+test -s shared/reindex/reindex.prefixes-file.json && echo "prefix map generated"
 docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml ps search-reindexing search-live-indexing
 ```
 
 expected
 
 ```text
-restore mounts are present, reindexing runs/completes, and live indexing starts afterwards
+restore mounts are present, prefix map file exists, reindexing runs/completes, and live indexing starts afterwards
 ```
 
 ### Step 11 - Stage 11 (Local Security Hardening)

@@ -9,6 +9,12 @@ This stage restores data from an installation created with
 
 Then it rebuilds search indexes from scratch in OpenSearch.
 
+Important for real migrated data:
+- install repository addon `model-ns-prefix-mapping` first
+- generate `shared/reindex/reindex.prefixes-file.json` from repository endpoint
+  before running `search-reindexing`
+- addon source: https://github.com/AlfrescoLabs/model-ns-prefix-mapping
+
 ## 0) Search Backend Verification (Feb 19, 2026)
 
 Official ACS deployment compose currently uses **Elasticsearch** (not OpenSearch):
@@ -114,7 +120,20 @@ cat "$sql_file" | \
   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 ```
 
-## 5) Start Full Stage 10
+## 5) Prepare Addons For Stage 10 (Required)
+
+Populate Stage 10 addon folders and ensure `model-ns-prefix-mapping` JAR is
+present in `addons/repository/jars`:
+
+```bash
+cd stages/10-restore-onprem
+../../shared/fetch-addons.sh
+```
+
+Reference:
+- [ADDONS.md](./ADDONS.md)
+
+## 6) Start Full Stage 10
 
 ```bash
 docker compose --env-file ../../.env -f compose.yaml up -d
@@ -125,7 +144,28 @@ Notes:
 - repository extension config is mounted from `./import/config/alfresco-extension` to
   `/usr/local/tomcat/shared/classes/alfresco/extension`.
 
-## 6) Reindex From Scratch in OpenSearch
+## 7) Generate Namespace Prefix Map (Required Before Reindex)
+
+Use the addon endpoint to generate the live prefix map file used by reindexing:
+
+```bash
+cd stages/10-restore-onprem
+set -a; source ../../.env; set +a
+
+curl -fsS "http://localhost:${PROXY_HTTP_PORT}/alfresco/s/model/ns-prefix-map" \
+  > ../../shared/reindex/reindex.prefixes-file.json
+```
+
+Validate the file is non-empty:
+
+```bash
+test -s ../../shared/reindex/reindex.prefixes-file.json && echo "prefix map generated"
+```
+
+If this endpoint fails, rebuild Stage 10 after installing
+`model-ns-prefix-mapping` into `addons/repository/jars`.
+
+## 8) Reindex From Scratch in OpenSearch
 
 Delete previous indices and run reindexing service:
 
@@ -148,7 +188,7 @@ docker compose --env-file ../../.env -f compose.yaml exec -T opensearch \
   curl -fsS "http://localhost:9200/_cat/indices?v"
 ```
 
-## 7) Validation
+## 9) Validation
 
 1. Open `http://localhost:${PROXY_HTTP_PORT}/share` and authenticate.
 2. Confirm documents are present and preview works.

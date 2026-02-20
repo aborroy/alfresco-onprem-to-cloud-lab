@@ -38,6 +38,18 @@ Addon set from `alfresco-ubuntu-installer/ADDONS.md`:
 - ESign Certification Addon (1.8.4)
 - Alfresco PDF Toolkit (1.4)
 - Alfresco T-Engine OCR Addon
+- Model NS Prefix Mapping (required for migration reindex)
+
+## Required For Real Migration Data
+
+For real migrated data, `model-ns-prefix-mapping` must be installed in
+repository image (`addons/repository/jars`). The addon exposes:
+
+- https://github.com/AlfrescoLabs/model-ns-prefix-mapping
+- `/alfresco/s/model/ns-prefix-map`
+
+That endpoint is required in Stage 10 to generate
+`shared/reindex/reindex.prefixes-file.json` before `search-reindexing`.
 
 Start Stage 10:
 

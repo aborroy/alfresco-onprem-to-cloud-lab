@@ -154,6 +154,7 @@ fetch_addon "Share Online Edition Addon (0.3.0)"           "zylklab/alfresco-sha
 fetch_addon "ESign Certification Addon (1.8.4)"            "ambientelivre/alfresco-esign-cert"           "1.8.4"          '(esign|cert)'
 fetch_addon "Alfresco PDF Toolkit (1.4)"                   "OrderOfTheBee/alfresco-pdf-toolkit"          "1.4"            '(pdf-toolkit|pdftoolkit|pdf)'
 fetch_addon "Alfresco T-Engine OCR Addon"                  "aborroy/alf-tengine-ocr"                     "1.0.0"          '(ocr|tengine)'
+fetch_addon "Model NS Prefix Mapping (required for migration reindex)" "AlfrescoLabs/model-ns-prefix-mapping" "latest" '(model-ns-prefix|ns-prefix|prefix-mapping)'
 
 log ""
 log "done"
