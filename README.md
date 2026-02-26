@@ -121,7 +121,7 @@ Important:
 
 ## Walkthrough
 
-### Step 1 - Stage 01 (Repository + PostgreSQL)
+### Stage 01 (Repository + PostgreSQL)
 
 > Docker Compose baseline directives [`services`](https://docs.docker.com/reference/compose-file/services/), [`image`](https://docs.docker.com/reference/compose-file/services/#image), [`environment`](https://docs.docker.com/reference/compose-file/services/#environment), [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on), and [`ports`](https://docs.docker.com/reference/compose-file/services/#ports). Stages 01-07 keep storage ephemeral for simplicity.
 
@@ -162,7 +162,7 @@ expected
 {"entry":{"message":"readyProbe: Success - Tested"}}
 ```
 
-### Step 2 - Stage 02 (Transform Core AIO)
+### Stage 02 (Transform Core AIO)
 
 ```mermaid
 flowchart LR
@@ -193,7 +193,7 @@ expected
 transform-core-aio is Up, and /ready returns HTTP 200
 ```
 
-### Step 3 - Stage 03 (Transform Service ATS)
+### Stage 03 (Transform Service ATS)
 
 ```mermaid
 flowchart LR
@@ -235,7 +235,7 @@ expected
 ATS services are Up, ActiveMQ web is reachable, and SFS/T-Router health endpoints return HTTP 200
 ```
 
-### Step 4 - Stage 04 (Solr Search With ATS Content)
+### Stage 04 (Solr Search With ATS Content)
 
 ```mermaid
 flowchart LR
@@ -290,7 +290,7 @@ expected
 }
 ```
 
-### Step 5 - Stage 05 (Migrate Solr to OpenSearch With ATS Content)
+### Stage 05 (Migrate Solr to OpenSearch With ATS Content)
 
 > Docker Compose introduces [`healthcheck`](https://docs.docker.com/reference/compose-file/services/#healthcheck), conditional [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on) (`condition: ...`), and [`restart`](https://docs.docker.com/reference/compose-file/services/#restart) (`on-failure:5`) for the reindex/live-indexing sequence.
 > OpenSearch indexing scope from this step onward: `metadata + content`.
@@ -362,7 +362,7 @@ expected
 }
 ```
 
-### Step 6 - Stage 06 (Full Stack Without Proxy)
+### Stage 06 (Full Stack Without Proxy)
 
 ```mermaid
 flowchart LR
@@ -422,7 +422,7 @@ Login works, upload succeeds, and full-text search returns the newly uploaded do
 This confirms repo, transform, messaging, and OpenSearch indexing are working together.
 ```
 
-### Step 7 - Stage 07 (Add Reverse Proxy)
+### Stage 07 (Add Reverse Proxy)
 
 ```mermaid
 flowchart LR
@@ -485,7 +485,7 @@ expected
 proxy is Up and `/alfresco`, `/workspace`, and `/share` respond through port 8080
 ```
 
-### Step 8 - Stage 08 (Best-Practice Runtime Controls)
+### Stage 08 (Best-Practice Runtime Controls)
 
 > Docker Compose introduces [`deploy`](https://docs.docker.com/reference/compose-file/services/#deploy)/[`resources`](https://docs.docker.com/reference/compose-file/deploy/#resources), [`restart`](https://docs.docker.com/reference/compose-file/services/#restart), broader [`healthcheck`](https://docs.docker.com/reference/compose-file/services/#healthcheck) usage, [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on) with `service_healthy`, plus host/runtime directives [`command`](https://docs.docker.com/reference/compose-file/services/#command), [`ulimits`](https://docs.docker.com/reference/compose-file/services/#ulimits), [`cap_add`](https://docs.docker.com/reference/compose-file/services/#cap_add), and persistent [`volumes`](https://docs.docker.com/reference/compose-file/services/#volumes).
 
@@ -572,7 +572,7 @@ expected
 core services report healthy/running and compose config contains deploy/resources/healthcheck/restart/service_healthy directives
 ```
 
-### Step 9 - Stage 09 (Install Addons)
+### Stage 09 (Install Addons)
 
 > Docker Compose introduces [`build`](https://docs.docker.com/reference/compose-file/services/#build) ([`context`](https://docs.docker.com/compose/compose-file/build/#context), [`dockerfile`](https://docs.docker.com/compose/compose-file/build/#dockerfile), [`args`](https://docs.docker.com/compose/compose-file/build/#args)) for custom addon images.
 
@@ -645,7 +645,7 @@ expected
 alfresco/share are Up and local addon images are present
 ```
 
-### Step 10 - Stage 10 (Restore On-Prem Data and Reindex)
+### Stage 10 (Restore On-Prem Data and Reindex)
 
 > For real migrated data, install repository addon `model-ns-prefix-mapping` and
 > generate `shared/reindex/reindex.prefixes-file.json` from
@@ -727,7 +727,7 @@ expected
 restore mounts are present, prefix map file exists, reindexing runs/completes, and live indexing starts afterwards
 ```
 
-### Step 11 - Stage 11 (Local Security Hardening)
+### Stage 11 (Local Security Hardening)
 
 ```mermaid
 flowchart LR
@@ -796,7 +796,7 @@ expected
 HTTPS probe succeeds, HTTP endpoint redirects, and TLS 1.3 handshake is established
 ```
 
-### Step 12 - Stage 12 (Kubernetes Image Bakery Handoff)
+### Stage 12 (Kubernetes Image Bakery Handoff)
 
 ```mermaid
 flowchart LR
