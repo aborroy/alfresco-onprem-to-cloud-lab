@@ -16,6 +16,11 @@
 stages/**/data/
 stages/**/import/
 
+# Java packages
+*.jar
+*.amp
+*.war
+
 # Local TLS certs (generated)
 stages/11-security-local/proxy/certs/
 
