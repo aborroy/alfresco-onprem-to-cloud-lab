@@ -31,10 +31,10 @@ docker compose version
 | Stage (Learning Sequence) | Compose File | Focus |
 |---|---|---|
 | `01-repo` | `stages/01-repo/compose.yaml` | Repository + PostgreSQL (no search) |
-| `02-transform-core-aio` | `stages/02-repo-search-solr/compose.yaml` | Add Transform Core AIO (no search yet) |
-| `03-transform-service-ats` | `stages/03-repo-search-opensearch/compose.yaml` | Add ATS async transform (no search yet) |
-| `04-solr-search-with-ats` | `stages/04-repo-search-opensearch-transform-aio/compose.yaml` | Add Solr search on top of ATS (content indexing path) |
-| `05-opensearch-migration-with-ats` | `stages/05-repo-search-opensearch-transform-ats/compose.yaml` | Migrate Solr -> OpenSearch with reindex + live indexing (content) |
+| `02-transform-core-aio` | `stages/02-transform-core-aio/compose.yaml` | Add Transform Core AIO (no search yet) |
+| `03-transform-service-ats` | `stages/03-transform-service-ats/compose.yaml` | Add ATS async transform (no search yet) |
+| `04-solr-search-with-ats` | `stages/04-solr-search-with-ats/compose.yaml` | Add Solr search on top of ATS (content indexing path) |
+| `05-opensearch-migration-with-ats` | `stages/05-opensearch-migration-with-ats/compose.yaml` | Migrate Solr -> OpenSearch with reindex + live indexing (content) |
 | `06-full-stack` | `stages/06-full-stack/compose.yaml` | Add ADW + Share |
 | `07-full-stack-proxy` | `stages/07-full-stack-proxy/compose.yaml` | Add reverse proxy |
 | `08-best-practices` | `stages/08-best-practices/compose.yaml` | Healthchecks/resources/depends_on patterns |
@@ -57,7 +57,7 @@ If you run stages sequentially on one VM, stop the current stage before starting
 
 ```bash
 # Example: stop Stage 05
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml down
+docker compose --env-file .env -f stages/05-opensearch-migration-with-ats/compose.yaml down
 ```
 
 Then start the next stage.
@@ -118,7 +118,7 @@ Start
 
 ```bash
 docker compose --env-file .env -f stages/01-repo/compose.yaml down
-docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml up
+docker compose --env-file .env -f stages/02-transform-core-aio/compose.yaml up
 ```
 
 Validate DB and Repository (instructions above)
@@ -126,7 +126,7 @@ Validate DB and Repository (instructions above)
 Validate Transform
 
 ```bash
-docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml exec -T transform-core-aio \
+docker compose --env-file .env -f stages/02-transform-core-aio/compose.yaml exec -T transform-core-aio \
   curl -f http://localhost:8090/ready
 ```
 
@@ -153,8 +153,8 @@ flowchart LR
 **Start**
 
 ```bash
-docker compose --env-file .env -f stages/02-repo-search-solr/compose.yaml down
-docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml up
+docker compose --env-file .env -f stages/02-transform-core-aio/compose.yaml down
+docker compose --env-file .env -f stages/03-transform-service-ats/compose.yaml up
 ```
 
 Validate DB and Repository (instructions above)
@@ -163,9 +163,9 @@ Validate Transform (new in this step: ATS async)
 
 ```bash
 curl -f http://localhost:8161
-docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T shared-file-store \
+docker compose --env-file .env -f stages/03-transform-service-ats/compose.yaml exec -T shared-file-store \
   curl -f http://localhost:8099/ready
-docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml exec -T transform-router \
+docker compose --env-file .env -f stages/03-transform-service-ats/compose.yaml exec -T transform-router \
   curl -f http://localhost:8095/actuator/health
 ```
 
@@ -193,8 +193,8 @@ flowchart LR
 **Start**
 
 ```bash
-docker compose --env-file .env -f stages/03-repo-search-opensearch/compose.yaml down
-docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml up
+docker compose --env-file .env -f stages/03-transform-service-ats/compose.yaml down
+docker compose --env-file .env -f stages/04-solr-search-with-ats/compose.yaml up
 ```
 
 Validate DB and Repository (instructions above)
@@ -254,8 +254,8 @@ flowchart LR
 **Start**
 
 ```bash
-docker compose --env-file .env -f stages/04-repo-search-opensearch-transform-aio/compose.yaml down
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml up
+docker compose --env-file .env -f stages/04-solr-search-with-ats/compose.yaml down
+docker compose --env-file .env -f stages/05-opensearch-migration-with-ats/compose.yaml up
 ```
 
 Validate DB and Repository (instructions above)
@@ -315,7 +315,7 @@ flowchart LR
 **Start**
 
 ```bash
-docker compose --env-file .env -f stages/05-repo-search-opensearch-transform-ats/compose.yaml down
+docker compose --env-file .env -f stages/05-opensearch-migration-with-ats/compose.yaml down
 docker compose --env-file .env -f stages/06-full-stack/compose.yaml up
 ```
 
