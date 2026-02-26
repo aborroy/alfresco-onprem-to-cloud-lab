@@ -409,15 +409,15 @@ Validate Proxy (new in this step)
 
 ```bash
 docker compose --env-file .env -f stages/07-full-stack-proxy/compose.yaml ps proxy
-curl -f http://localhost:${PROXY_HTTP_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
-curl -f http://localhost:${PROXY_HTTP_PORT}/workspace
-curl -f http://localhost:${PROXY_HTTP_PORT}/share
+curl -f http://localhost:8080/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
+curl -f http://localhost:8080/workspace
+curl -f http://localhost:8080/share
 ```
 
 expected
 
 ```text
-proxy is Up and all routes respond through port ${PROXY_HTTP_PORT}
+proxy is Up and all routes respond through port 8080
 ```
 
 ### Step 8 - Stage 08 (Best-Practice Runtime Controls)
@@ -614,9 +614,9 @@ Validate UI and Proxy (instructions above)
 Validate TLS Security (new in this step)
 
 ```bash
-curl -k -f https://localhost:${PROXY_HTTPS_PORT}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
-curl -I http://localhost:${PROXY_HTTP_PORT} | head -n 1
-openssl s_client -connect localhost:${PROXY_HTTPS_PORT} -tls1_3
+curl -k -f https://localhost:8443/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
+curl -I http://localhost:8080 | head -n 1
+openssl s_client -connect localhost:8443 -tls1_3
 ```
 
 expected
