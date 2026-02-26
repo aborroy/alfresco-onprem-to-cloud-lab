@@ -784,6 +784,97 @@ test -f ./helm-values.overrides.yaml && echo "helm overrides generated"
 - Stage 04 introduces Solr search with ATS so students validate content search before migration.
 - Stage 05 performs Solr to OpenSearch migration using reindex + live indexing.
 
+## Production Migration Addendum
+
+### 1. Lab vs Production Boundary
+
+- This repository is a staged learning path, not a production deployment blueprint by itself.
+- Stages `01` to `09` are primarily educational and iterative.
+- The minimum production-oriented baseline in this repo is Stage `11`, plus additional hardening in your own environment.
+- Do not run multiple stage compose files as one long-lived production system.
+- Select one final compose baseline, version it, and promote it through non-prod environments first.
+
+### 2. Security Baseline Before Go-Live
+
+- Replace all default credentials in `.env` before any production usage.
+- Use CA-issued certificates. Stage `11` certificate helper is for local testing.
+- Remove unnecessary host-exposed ports for internal services.
+- Enable and harden OpenSearch security for production deployments.
+- Run image and dependency vulnerability scanning as a release gate.
+
+### 3. Secrets Management
+
+- Do not store production secrets in tracked `.env` files.
+- Prefer Docker secrets or an external secret manager.
+- Keep secret files outside git and rotate them on a schedule.
+
+Docker secrets pattern example:
+
+```yaml
+services:
+  postgres:
+    secrets:
+      - postgres_password
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+```
+
+### 4. Cutover and Rollback Runbook
+
+1. Run at least one full dry-run migration in non-prod.
+2. Define a write-freeze window on on-prem before final export.
+3. Take final backups and record checksums.
+4. Start target stack, run reindex, and complete smoke tests.
+5. Switch traffic only after validation gate passes.
+6. Keep rollback criteria explicit and time-boxed.
+
+### 5. Backup and DR for Named Volumes
+
+- Inventory named volumes before each major change.
+- Backup volumes on a fixed schedule and before migration/cutover windows.
+- Test restore on a separate environment, not only backup creation.
+
+List volumes:
+
+```bash
+docker volume ls | grep -E 'acs25-stage(08|09|10|11)'
+```
+
+Backup one volume example:
+
+```bash
+mkdir -p backups
+docker run --rm \
+  -v acs25-stage11_postgres-data:/from \
+  -v "$PWD/backups:/to" \
+  alpine sh -c 'cd /from && tar czf /to/postgres-data_$(date +%F_%H%M%S).tgz .'
+```
+
+Restore one volume example:
+
+```bash
+docker run --rm \
+  -v acs25-stage11_postgres-data:/to \
+  -v "$PWD/backups:/from" \
+  alpine sh -c 'cd /to && tar xzf /from/postgres-data_<timestamp>.tgz'
+```
+
+### 6. Migration Validation Gate (Before Prod Traffic)
+
+- Data parity: compare document/folder counts and sample key business sites.
+- Search parity: validate representative queries and result relevance.
+- Security parity: verify ACLs/permissions for multiple real user profiles.
+- Functional parity: validate transforms/renditions, workflows, and rules.
+- Performance parity: compare baseline response times and error rates.
+
+Minimum sign-off recommendation:
+
+1. Technical owner signs infra and observability checks.
+2. Application owner signs business scenario checks.
+3. Security owner signs TLS, credentials, and access-control checks.
+
 ## References
 
 - [alfresco-incremental-deployment](https://github.com/aborroy/alfresco-incremental-deployment)
