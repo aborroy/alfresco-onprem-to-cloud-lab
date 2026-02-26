@@ -337,6 +337,9 @@ services:
     environment:
       APP_CONFIG_PROVIDER: ECM
       APP_CONFIG_AUTH_TYPE: BASIC
+      APP_CONFIG_ECM_HOST: http://localhost:${PROXY_HTTP_PORT}
+      APP_CONFIG_PLUGIN_PROCESS_SERVICE: "false"
+      APP_CONFIG_PLUGIN_MICROSOFT_ONLINE: "false"
       BASE_PATH: /workspace/
       APP_BASE_SHARE_URL: http://localhost:${PROXY_HTTP_PORT}/workspace/#/preview/s
     healthcheck:
