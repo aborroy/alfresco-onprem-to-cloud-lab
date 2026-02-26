@@ -170,6 +170,9 @@ flowchart LR
   repo --> db["postgres"]
   repo --> mq["activemq"]
   repo --> tr["transform-router"]
+  repo --> sfs["shared-file-store"]
+  repo --> aio["transform-core-aio"]
+  tr --> mq
   tr --> aio["transform-core-aio"]
   tr --> sfs["shared-file-store"]
   aio --> mq
@@ -210,6 +213,9 @@ flowchart LR
   repo --> solr["solr6"]
   repo --> mq["activemq"]
   repo --> tr["transform-router"]
+  repo --> sfs["shared-file-store"]
+  repo --> aio["transform-core-aio"]
+  tr --> mq
   tr --> aio["transform-core-aio"]
   tr --> sfs["shared-file-store"]
   aio --> mq
@@ -265,6 +271,9 @@ flowchart LR
   repo --> os["opensearch"]
   repo --> mq["activemq"]
   repo --> tr["transform-router"]
+  repo --> sfs["shared-file-store"]
+  repo --> aio["transform-core-aio"]
+  tr --> mq
   tr --> aio["transform-core-aio"]
   tr --> sfs["shared-file-store"]
   aio --> mq
@@ -272,8 +281,13 @@ flowchart LR
   reidx["search-reindexing"] --> db
   reidx --> os
   reidx --> mq
+  reidx --> aio
   live["search-live-indexing"] --> os
   live --> mq
+  live --> aio
+  live --> sfs
+  reidx -. "waits for repo readiness" .-> repo
+  live -. "waits for repo readiness" .-> repo
   reidx -. "completes first" .-> live
 ```
 
@@ -324,17 +338,28 @@ flowchart LR
   user["User"] --> repo["alfresco"]
   user --> share["share"]
   user --> adw["digital-workspace"]
+  share --> repo
   repo --> db["postgres"]
   repo --> os["opensearch"]
   repo --> mq["activemq"]
   repo --> tr["transform-router"]
+  repo --> sfs["shared-file-store"]
+  repo --> aio["transform-core-aio"]
+  tr --> mq
   tr --> aio["transform-core-aio"]
   tr --> sfs["shared-file-store"]
+  aio --> mq
+  aio --> sfs
   reidx["search-reindexing"] --> db
   reidx --> os
   reidx --> mq
+  reidx --> aio
   live["search-live-indexing"] --> os
   live --> mq
+  live --> aio
+  live --> sfs
+  reidx -. "waits for repo readiness" .-> repo
+  live -. "waits for repo readiness" .-> repo
   reidx -. "completes first" .-> live
 ```
 
@@ -374,10 +399,14 @@ flowchart LR
   proxy --> repo["alfresco"]
   proxy --> share["share"]
   proxy --> adw["digital-workspace"]
+  share --> repo
   repo --> db["postgres"]
   repo --> os["opensearch"]
   repo --> mq["activemq"]
   repo --> tr["transform-router"]
+  repo --> sfs["shared-file-store"]
+  repo --> aio["transform-core-aio"]
+  tr --> mq
   tr --> aio["transform-core-aio"]
   tr --> sfs["shared-file-store"]
   aio --> mq
@@ -385,8 +414,13 @@ flowchart LR
   reidx["search-reindexing"] --> db
   reidx --> os
   reidx --> mq
+  reidx --> aio
   live["search-live-indexing"] --> os
   live --> mq
+  live --> aio
+  live --> sfs
+  reidx -. "waits for repo readiness" .-> repo
+  live -. "waits for repo readiness" .-> repo
   reidx -. "completes first" .-> live
 ```
 
@@ -430,13 +464,34 @@ flowchart LR
   proxy --> repo["alfresco"]
   proxy --> share["share"]
   proxy --> adw["digital-workspace"]
+  share --> repo
   repo --> db["postgres"]
   repo --> os["opensearch"]
   repo --> mq["activemq"]
   repo --> tr["transform-router"]
+  repo --> sfs["shared-file-store"]
+  repo --> aio["transform-core-aio"]
+  tr --> mq
+  tr --> aio["transform-core-aio"]
+  tr --> sfs["shared-file-store"]
+  aio --> mq
+  aio --> sfs
+  reidx["search-reindexing"] --> db
+  reidx --> os
+  reidx --> mq
+  reidx --> aio
+  live["search-live-indexing"] --> os
+  live --> mq
+  live --> aio
+  live --> sfs
+  reidx -. "waits for repo readiness" .-> repo
+  live -. "waits for repo readiness" .-> repo
+  reidx -. "completes first" .-> live
   controls["healthchecks + depends_on + deploy resources"] -.-> repo
+  controls -.-> db
   controls -.-> os
   controls -.-> mq
+  controls -.-> tr
 ```
 
 **Start**
@@ -477,12 +532,35 @@ core services report healthy/running and compose config contains deploy/resource
 flowchart LR
   addons["addons files"] --> buildRepo["custom alfresco image"]
   addons --> buildShare["custom share image"]
+  buildRepo --> repo["alfresco custom"]
+  buildShare --> share["share custom"]
   user["User"] --> proxy["proxy nginx"]
   proxy --> repo["alfresco custom"]
   proxy --> share["share custom"]
   proxy --> adw["digital-workspace"]
+  share --> repo
   repo --> db["postgres"]
   repo --> os["opensearch"]
+  repo --> mq["activemq"]
+  repo --> tr["transform-router"]
+  repo --> sfs["shared-file-store"]
+  repo --> aio["transform-core-aio"]
+  tr --> mq
+  tr --> aio["transform-core-aio"]
+  tr --> sfs["shared-file-store"]
+  aio --> mq
+  aio --> sfs
+  reidx["search-reindexing"] --> db
+  reidx --> os
+  reidx --> mq
+  reidx --> aio
+  live["search-live-indexing"] --> os
+  live --> mq
+  live --> aio
+  live --> sfs
+  reidx -. "waits for repo readiness" .-> repo
+  live -. "waits for repo readiness" .-> repo
+  reidx -. "completes first" .-> live
 ```
 
 Follow [stages/09-addons/ADDONS.md](stages/09-addons/ADDONS.md), then:
@@ -531,12 +609,36 @@ flowchart LR
   backup["on-prem backup"] --> importDb["import db dump"]
   backup --> importData["import alf_data"]
   backup --> importCfg["import config"]
+  user["User"] --> proxy["proxy nginx"]
+  proxy --> repo["alfresco custom"]
+  proxy --> share["share custom"]
+  proxy --> adw["digital-workspace"]
+  share --> repo
   importDb --> db["postgres"]
-  importData --> repo["alfresco"]
+  importData --> repo["alfresco custom"]
   importCfg --> repo
+  repo --> db
   repo --> os["opensearch"]
+  repo --> mq["activemq"]
+  repo --> tr["transform-router"]
+  repo --> sfs["shared-file-store"]
+  repo --> aio["transform-core-aio"]
+  tr --> mq
+  tr --> aio["transform-core-aio"]
+  tr --> sfs["shared-file-store"]
+  aio --> mq
+  aio --> sfs
   reidx["search-reindexing"] --> db
   reidx --> os
+  reidx --> mq
+  reidx --> aio
+  live["search-live-indexing"] --> os
+  live --> mq
+  live --> aio
+  live --> sfs
+  reidx -. "waits for repo readiness" .-> repo
+  live -. "waits for repo readiness" .-> repo
+  reidx -. "completes first" .-> live
 ```
 
 Use:
@@ -587,8 +689,29 @@ flowchart LR
   proxy --> repo["alfresco"]
   proxy --> share["share"]
   proxy --> adw["digital-workspace"]
+  share --> repo
   repo --> db["postgres"]
   repo --> os["opensearch"]
+  repo --> mq["activemq"]
+  repo --> tr["transform-router"]
+  repo --> sfs["shared-file-store"]
+  repo --> aio["transform-core-aio"]
+  tr --> mq
+  tr --> aio["transform-core-aio"]
+  tr --> sfs["shared-file-store"]
+  aio --> mq
+  aio --> sfs
+  reidx["search-reindexing"] --> db
+  reidx --> os
+  reidx --> mq
+  reidx --> aio
+  live["search-live-indexing"] --> os
+  live --> mq
+  live --> aio
+  live --> sfs
+  reidx -. "waits for repo readiness" .-> repo
+  live -. "waits for repo readiness" .-> repo
+  reidx -. "completes first" .-> live
 ```
 
 Use [stages/11-security-local/SECURITY.md](stages/11-security-local/SECURITY.md), then:
