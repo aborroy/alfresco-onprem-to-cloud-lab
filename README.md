@@ -31,6 +31,13 @@ Before starting, ensure:
 3. You have Enterprise credentials/license access where required
 4. You have a baseline on-prem VM (Alfresco 23.3 Community) for migration exercises
 
+Verify Docker is running:
+
+```bash
+docker --version
+docker compose version
+```
+
 `quay.io` login (required for private Enterprise images):
 
 ```bash
@@ -48,13 +55,6 @@ Quick verification:
 
 ```bash
 docker pull quay.io/alfresco/alfresco-content-repository:25.3.0
-```
-
-Optional checks:
-
-```bash
-docker --version
-docker compose version
 ```
 
 ## Stage Overview
