@@ -525,6 +525,23 @@ flowchart LR
   controls -.-> tr
 ```
 
+Stage 08 resource settings (from `stages/08-best-practices/compose.yaml`):
+
+| Service | CPU Limit | CPU Reservation | Memory Limit | Memory Reservation |
+|---|---|---|---|---|
+| `postgres` | `1` | `0.5` | `512m` | `256m` |
+| `opensearch` | `2` | `1` | `2g` | `1g` |
+| `activemq` | `1` | `0.5` | `1g` | `512m` |
+| `shared-file-store` | `0.5` | `0.25` | `512m` | `256m` |
+| `transform-core-aio` | `2` | `1` | `1536m` | `1g` |
+| `transform-router` | `0.5` | `0.25` | `512m` | `256m` |
+| `alfresco` | `2` | `1` | `1900m` | `1g` |
+| `search-live-indexing` | `1` | `0.5` | `1g` | `512m` |
+| `search-reindexing` | `1` | `0.5` | `1g` | `512m` |
+| `digital-workspace` | `0.25` | `0.1` | `128m` | `64m` |
+| `share` | `1` | `0.5` | `1g` | `512m` |
+| `proxy` | `0.5` | `0.25` | `256m` | `128m` |
+
 **Start**
 
 ```bash
