@@ -17,7 +17,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER"]
       interval: 10s
@@ -51,7 +51,7 @@ services:
     cap_add:
       - IPC_LOCK
     volumes:
-      - ./data/opensearch:/usr/share/opensearch/data
+      - opensearch-data:/usr/share/opensearch/data
     healthcheck:
       test: ["CMD-SHELL", "curl -s -X GET http://localhost:9200/_cluster/health?pretty | grep status | grep -q '\\(green\\|yellow\\)'"]
       interval: 10s
@@ -98,7 +98,7 @@ services:
       scheduler.content.age.millis: 86400000
       scheduler.cleanup.interval: 86400000
     volumes:
-      - ./data/shared-file-store:/tmp/Alfresco
+      - shared-file-store-data:/tmp/Alfresco
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8099/ready"]
       interval: 20s
@@ -419,3 +419,8 @@ services:
       retries: 5
       start_period: 20s
     restart: unless-stopped
+
+volumes:
+  postgres-data:
+  opensearch-data:
+  shared-file-store-data:

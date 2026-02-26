@@ -64,6 +64,30 @@ Then start the next stage.
 
 Note: Stages 01-07 are intentionally ephemeral (no persistent data volumes). Stage 08 introduces persistent runtime volumes.
 
+## Storage Mode
+
+Stages 08-11 now use Docker named volumes (standard Docker volumes) for runtime data persistence instead of host bind mounts.
+
+Named volumes used by default:
+
+- `postgres-data`
+- `opensearch-data`
+- `shared-file-store-data`
+- `alfresco-data` (Stages 08-09)
+
+To switch a stage back to bind mounts (host folders):
+
+1. Stop the stage stack.
+2. In the stage `compose.yaml`, replace named volume mappings with host mappings, for example:
+   `postgres-data:/var/lib/postgresql/data` -> `./data/postgres:/var/lib/postgresql/data`
+3. Create host folders before startup, for example:
+   `mkdir -p stages/08-best-practices/data/{postgres,opensearch,shared-file-store,alf_data}`
+4. Start the stage again.
+
+Important:
+
+- Stage 10 and Stage 11 intentionally keep bind mounts for `./import/...` (restore inputs) and `./proxy/...` (TLS/proxy assets), because those must come from host files.
+
 ## Walkthrough
 
 ### Step 1 - Stage 01 (Repository + PostgreSQL)
