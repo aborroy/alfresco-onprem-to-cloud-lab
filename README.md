@@ -459,7 +459,7 @@ flowchart LR
 
 ```bash
 docker compose --env-file .env -f stages/06-full-stack/compose.yaml down
-docker compose --env-file .env -f stages/07-full-stack-proxy/compose.yaml up -d
+docker compose --env-file .env -f stages/07-full-stack-proxy/compose.yaml up
 ```
 
 Validate DB and Repository (instructions above)
@@ -546,7 +546,7 @@ Stage 08 resource settings (from `stages/08-best-practices/compose.yaml`):
 
 ```bash
 docker compose --env-file .env -f stages/07-full-stack-proxy/compose.yaml down
-docker compose --env-file .env -f stages/08-best-practices/compose.yaml up -d
+docker compose --env-file .env -f stages/08-best-practices/compose.yaml up
 ```
 
 Validate DB and Repository (instructions above)
@@ -620,7 +620,7 @@ cd stages/09-addons
 ../../shared/fetch-addons.sh
 cd ../..
 docker compose --env-file .env -f stages/08-best-practices/compose.yaml down
-docker compose --env-file .env -f stages/09-addons/compose.yaml up -d --build
+docker compose --env-file .env -f stages/09-addons/compose.yaml up --build
 ```
 
 Validate DB and Repository (instructions above)
@@ -701,7 +701,7 @@ Then:
 
 ```bash
 docker compose --env-file .env -f stages/09-addons/compose.yaml down
-docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml up -d --build
+docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml up --build
 ```
 
 Validate DB and Repository (instructions above)
@@ -771,7 +771,7 @@ cd stages/11-security-local
 NGINX_SERVER_NAME=localhost ./generate-certs.sh
 cd ../..
 docker compose --env-file .env -f stages/10-restore-onprem/compose.yaml down
-docker compose --env-file .env -f stages/11-security-local/compose.yaml up -d --build
+docker compose --env-file .env -f stages/11-security-local/compose.yaml up --build
 ```
 
 Validate DB and Repository (instructions above)
