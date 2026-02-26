@@ -10,6 +10,18 @@ By the end of this lab, you should be able to:
 6. Apply local security hardening with TLS 1.3
 7. Prepare custom images for Kubernetes using Alfresco Dockerfiles Bakery
 
+## Table of Contents
+
+- [Pre-Lab Checklist](#pre-lab-checklist)
+- [Stage Overview](#stage-overview)
+- [Detailed Guides (Use During Lab)](#detailed-guides-use-during-lab)
+- [How to Move Between Stages](#how-to-move-between-stages)
+- [Storage Mode](#storage-mode)
+- [Walkthrough](#walkthrough)
+- [Notes](#notes)
+- [Production Migration Addendum](#production-migration-addendum)
+- [References](#references)
+
 ## Pre-Lab Checklist
 
 Before starting, ensure:
