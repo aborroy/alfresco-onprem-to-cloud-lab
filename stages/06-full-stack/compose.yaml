@@ -7,8 +7,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
 
   opensearch:
     image: opensearchproject/opensearch:${OPENSEARCH_TAG}
@@ -17,8 +15,6 @@ services:
       DISABLE_INSTALL_DEMO_CONFIG: "true"
       discovery.type: single-node
       OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
-    volumes:
-      - ./data/opensearch:/usr/share/opensearch/data
 
   activemq:
     image: quay.io/alfresco/alfresco-activemq:${ACTIVEMQ_TAG}
@@ -105,8 +101,6 @@ services:
         -Dcors.allowed.headers=Authorization,Content-Type,Accept,Origin,X-Requested-With
         -Dcors.exposed.headers=Access-Control-Allow-Origin,Access-Control-Allow-Credentials
         -Dcors.support.credentials=true
-    volumes:
-      - ./data/alf_data:/usr/local/tomcat/alf_data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-"]
       interval: 30s

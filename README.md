@@ -62,11 +62,13 @@ docker compose --env-file .env -f stages/05-opensearch-migration-with-ats/compos
 
 Then start the next stage.
 
+Note: Stages 01-07 are intentionally ephemeral (no persistent data volumes). Stage 08 introduces persistent runtime volumes.
+
 ## Walkthrough
 
 ### Step 1 - Stage 01 (Repository + PostgreSQL)
 
-> Docker Compose baseline directives [`services`](https://docs.docker.com/reference/compose-file/services/), [`image`](https://docs.docker.com/reference/compose-file/services/#image), [`environment`](https://docs.docker.com/reference/compose-file/services/#environment), [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on), [`ports`](https://docs.docker.com/reference/compose-file/services/#ports), and [`volumes`](https://docs.docker.com/reference/compose-file/services/#volumes).
+> Docker Compose baseline directives [`services`](https://docs.docker.com/reference/compose-file/services/), [`image`](https://docs.docker.com/reference/compose-file/services/#image), [`environment`](https://docs.docker.com/reference/compose-file/services/#environment), [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on), and [`ports`](https://docs.docker.com/reference/compose-file/services/#ports). Stages 01-07 keep storage ephemeral for simplicity.
 
 ```mermaid
 flowchart LR
@@ -396,7 +398,7 @@ proxy is Up and all routes respond through port ${PROXY_HTTP_PORT}
 
 ### Step 8 - Stage 08 (Best-Practice Runtime Controls)
 
-> Docker Compose introduces [`deploy`](https://docs.docker.com/reference/compose-file/services/#deploy)/[`resources`](https://docs.docker.com/reference/compose-file/deploy/#resources), [`restart`](https://docs.docker.com/reference/compose-file/services/#restart), broader [`healthcheck`](https://docs.docker.com/reference/compose-file/services/#healthcheck) usage, [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on) with `service_healthy`, plus host/runtime directives [`command`](https://docs.docker.com/reference/compose-file/services/#command), [`ulimits`](https://docs.docker.com/reference/compose-file/services/#ulimits), and [`cap_add`](https://docs.docker.com/reference/compose-file/services/#cap_add).
+> Docker Compose introduces [`deploy`](https://docs.docker.com/reference/compose-file/services/#deploy)/[`resources`](https://docs.docker.com/reference/compose-file/deploy/#resources), [`restart`](https://docs.docker.com/reference/compose-file/services/#restart), broader [`healthcheck`](https://docs.docker.com/reference/compose-file/services/#healthcheck) usage, [`depends_on`](https://docs.docker.com/reference/compose-file/services/#depends_on) with `service_healthy`, plus host/runtime directives [`command`](https://docs.docker.com/reference/compose-file/services/#command), [`ulimits`](https://docs.docker.com/reference/compose-file/services/#ulimits), [`cap_add`](https://docs.docker.com/reference/compose-file/services/#cap_add), and persistent [`volumes`](https://docs.docker.com/reference/compose-file/services/#volumes).
 
 ```mermaid
 flowchart LR

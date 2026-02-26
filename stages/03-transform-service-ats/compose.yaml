@@ -7,8 +7,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
 
   activemq:
     image: quay.io/alfresco/alfresco-activemq:${ACTIVEMQ_TAG}
@@ -83,5 +81,3 @@ services:
         -Dalfresco.host=localhost
         -Dalfresco.port=${REPO_HTTP_PORT}
         -Dalfresco.protocol=http
-    volumes:
-      - ./data/alf_data:/usr/local/tomcat/alf_data

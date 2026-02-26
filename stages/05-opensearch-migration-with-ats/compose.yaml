@@ -7,8 +7,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
 
   opensearch:
     image: opensearchproject/opensearch:${OPENSEARCH_TAG}
@@ -19,8 +17,6 @@ services:
       OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
     ports:
       - "9200:9200"
-    volumes:
-      - ./data/opensearch:/usr/share/opensearch/data
 
   activemq:
     image: quay.io/alfresco/alfresco-activemq:${ACTIVEMQ_TAG}
@@ -101,8 +97,6 @@ services:
         -Dlegacy.transform.service.enabled=false
         -DlocalTransform.core-aio.url=http://transform-core-aio:8090/
         -Dcsrf.filter.enabled=false
-    volumes:
-      - ./data/alf_data:/usr/local/tomcat/alf_data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-"]
       interval: 30s
