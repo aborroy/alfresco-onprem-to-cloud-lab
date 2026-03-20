@@ -570,8 +570,6 @@ Validate Runtime Controls (new in this step)
 ```bash
 docker compose --env-file .env -f stages/08-best-practices/compose.yaml ps
 docker compose --env-file .env -f stages/08-best-practices/compose.yaml ps | grep -E "healthy|running"
-docker compose --env-file .env -f stages/08-best-practices/compose.yaml config | grep -En \
-  "deploy:|resources:|healthcheck:|restart:|condition: service_healthy"
 ```
 
 expected
