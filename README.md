@@ -617,7 +617,7 @@ flowchart LR
   reidx -. "completes first" .-> live
 ```
 
-Follow [stages/09-addons/ADDONS.md](stages/09-addons/ADDONS.md), then:
+Follow instructions in [stages/09-addons/ADDONS.md](stages/09-addons/ADDONS.md), or the brief version below:
 
 **Start**
 
