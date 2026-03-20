@@ -31,6 +31,13 @@ Before starting, ensure:
 3. You have Enterprise credentials/license access where required
 4. You have a baseline on-prem VM (Alfresco 23.3 Community) for migration exercises
 
+Grant the `ubuntu` user permission to run Docker without `sudo` ([Docker post-install docs](https://docs.docker.com/engine/install/linux-postinstall/)):
+
+```bash
+sudo usermod -aG docker ubuntu
+newgrp docker
+```
+
 Verify Docker is running:
 
 ```bash
