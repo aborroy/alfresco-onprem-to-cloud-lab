@@ -77,9 +77,9 @@ if [[ ! -f "${BAKERY_DIR}/Makefile" ]]; then
   exit 1
 fi
 
-export ACS_VERSION="${ACS_VERSION:-25}"
+export ACS_VERSION="${ACS_VERSION:-26}"
 export TARGETARCH="${TARGETARCH:-linux/amd64}"
-export TAG="${TAG:-25.3.0-custom}"
+export TAG="${TAG:-26.1.0-custom}"
 
 if [[ "${PUSH}" -eq 1 ]]; then
   : "${REGISTRY:?REGISTRY is required when --push is used}"

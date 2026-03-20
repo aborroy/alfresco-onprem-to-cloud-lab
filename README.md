@@ -2,7 +2,7 @@
 
 By the end of this lab, you should be able to:
 
-1. Stand up ACS 25 Enterprise incrementally with Docker Compose
+1. Stand up ACS 26 Enterprise incrementally with Docker Compose
 2. Compare Solr and OpenSearch search topologies
 3. Compare local transform (`transform-core-aio`) and full ATS async topology
 4. Restore on-prem data/configuration into containers
@@ -54,7 +54,7 @@ echo "<QUAY_TOKEN>" | docker login quay.io -u "<QUAY_USERNAME>" --password-stdin
 Quick verification:
 
 ```bash
-docker pull quay.io/alfresco/alfresco-content-repository:25.3.0
+docker pull quay.io/alfresco/alfresco-content-repository:26.1.0
 ```
 
 ## Stage Overview
@@ -887,7 +887,7 @@ secrets:
 List volumes:
 
 ```bash
-docker volume ls | grep -E 'acs25-stage(08|09|10|11)'
+docker volume ls | grep -E 'acs26-stage(08|09|10|11)'
 ```
 
 Backup one volume example:
@@ -895,7 +895,7 @@ Backup one volume example:
 ```bash
 mkdir -p backups
 docker run --rm \
-  -v acs25-stage11_postgres-data:/from \
+  -v acs26-stage11_postgres-data:/from \
   -v "$PWD/backups:/to" \
   alpine sh -c 'cd /from && tar czf /to/postgres-data_$(date +%F_%H%M%S).tgz .'
 ```
@@ -904,7 +904,7 @@ Restore one volume example:
 
 ```bash
 docker run --rm \
-  -v acs25-stage11_postgres-data:/to \
+  -v acs26-stage11_postgres-data:/to \
   -v "$PWD/backups:/from" \
   alpine sh -c 'cd /to && tar xzf /from/postgres-data_<timestamp>.tgz'
 ```

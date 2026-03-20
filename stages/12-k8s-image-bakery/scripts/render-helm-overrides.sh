@@ -50,7 +50,7 @@ fi
 
 REGISTRY="${REGISTRY:-localhost}"
 REGISTRY_NAMESPACE="${REGISTRY_NAMESPACE:-alfresco}"
-TAG="${TAG:-25.3.0-custom}"
+TAG="${TAG:-26.1.0-custom}"
 IMAGE_PREFIX="${REGISTRY}/${REGISTRY_NAMESPACE}"
 
 cat > "${OUTPUT_FILE}" <<YAML

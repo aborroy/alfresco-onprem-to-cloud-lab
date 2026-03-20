@@ -1,4 +1,4 @@
-name: acs25-stage02
+name: acs26-stage02
 
 services:
   postgres:
