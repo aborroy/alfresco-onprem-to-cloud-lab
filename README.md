@@ -66,7 +66,7 @@ docker pull quay.io/alfresco/alfresco-content-repository:26.1.0
 | `03-transform-service-ats` | `stages/03-transform-service-ats/compose.yaml` | Add ATS async transform (no search yet) |
 | `04-solr-search-with-ats` | `stages/04-solr-search-with-ats/compose.yaml` | Add Solr search on top of ATS (content indexing path) |
 | `05-opensearch-migration-with-ats` | `stages/05-opensearch-migration-with-ats/compose.yaml` | Migrate Solr -> OpenSearch with reindex + live indexing (content) |
-| `06-full-stack` | `stages/06-full-stack/compose.yaml` | Add ADW + Share |
+| `06-full-stack` | `stages/06-full-stack/compose.yaml` | Add ADW + Control Center + Share |
 | `07-full-stack-proxy` | `stages/07-full-stack-proxy/compose.yaml` | Add reverse proxy |
 | `08-best-practices` | `stages/08-best-practices/compose.yaml` | Healthchecks/resources/depends_on patterns |
 | `09-addons` | `stages/09-addons/compose.yaml` | Build custom repo/share images with addons |
@@ -539,6 +539,7 @@ Stage 08 resource settings (from `stages/08-best-practices/compose.yaml`):
 | `search-live-indexing` | `1` | `0.5` | `1g` | `512m` |
 | `search-reindexing` | `1` | `0.5` | `1g` | `512m` |
 | `digital-workspace` | `0.25` | `0.1` | `128m` | `64m` |
+| `control-center` | `0.25` | `0.1` | `128m` | `64m` |
 | `share` | `1` | `0.5` | `1g` | `512m` |
 | `proxy` | `0.5` | `0.25` | `256m` | `128m` |
 

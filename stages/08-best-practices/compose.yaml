@@ -350,6 +350,31 @@ services:
       start_period: 5s
     restart: unless-stopped
 
+  control-center:
+    image: quay.io/alfresco/alfresco-control-center:${CONTROL_CENTER_TAG}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128m
+        reservations:
+          cpus: "0.1"
+          memory: 64m
+    depends_on:
+      alfresco:
+        condition: service_healthy
+    environment:
+      APP_CONFIG_PROVIDER: ECM
+      APP_CONFIG_AUTH_TYPE: BASIC
+      BASE_PATH: /admin/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 1s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
   share:
     image: quay.io/alfresco/alfresco-share:${SHARE_TAG}
     deploy:
@@ -397,6 +422,8 @@ services:
       alfresco:
         condition: service_healthy
       digital-workspace:
+        condition: service_healthy
+      control-center:
         condition: service_healthy
       share:
         condition: service_healthy
