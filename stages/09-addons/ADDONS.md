@@ -55,5 +55,6 @@ before running `search-reindexing`.
 Start Stage 09:
 
 ```bash
-docker compose --env-file .env -f stages/09-addons/compose.yaml up -d --build
+docker compose --env-file .env -f stages/08-best-practices/compose.yaml down
+docker compose --env-file .env -f stages/09-addons/compose.yaml up --build
 ```
