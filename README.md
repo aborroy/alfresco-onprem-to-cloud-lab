@@ -191,13 +191,13 @@ Validate Transform
 
 ```bash
 docker compose --env-file .env -f stages/02-transform-core-aio/compose.yaml exec -T transform-core-aio \
-  curl -f http://localhost:8090/ready
+  curl -sf http://localhost:8090/ready
 ```
 
 expected
 
 ```text
-transform-core-aio is Up, and /ready returns HTTP 200
+Success - No transform.
 ```
 
 ### Stage 03 (Transform Service ATS)
@@ -231,9 +231,9 @@ Validate Transform (new in this step: ATS async)
 ```bash
 curl -f http://localhost:8161
 docker compose --env-file .env -f stages/03-transform-service-ats/compose.yaml exec -T shared-file-store \
-  curl -f http://localhost:8099/ready
+  curl -sf http://localhost:8099/ready
 docker compose --env-file .env -f stages/03-transform-service-ats/compose.yaml exec -T transform-router \
-  curl -f http://localhost:8095/actuator/health
+  curl -sf http://localhost:8095/actuator/health
 ```
 
 expected
