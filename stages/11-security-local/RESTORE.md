@@ -46,6 +46,7 @@ From this repository root:
 
 ```bash
 cd stages/11-security-local
+mkdir -p ./import/db ./import/alf_data ./import/config/alfresco-extension/keystore
 
 # Example: extract full backup archive into temporary folder
 tmp_dir="./import/_extracted"
@@ -150,7 +151,7 @@ docker compose --env-file ../../.env -f compose.yaml exec -T opensearch \
 
 ## 7) Validation
 
-1. Open `http://localhost:${PROXY_HTTP_PORT}/share` and authenticate.
+1. Open `https://localhost:${PROXY_HTTPS_PORT:-8443}/share` and authenticate (accept the self-signed cert warning).
 2. Confirm documents are present and preview works.
 3. Search for known content from previous installation.
 4. Verify no startup errors in `alfresco`, `search-live-indexing`, and `search-reindexing` logs.

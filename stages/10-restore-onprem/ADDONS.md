@@ -68,12 +68,12 @@ The fetched list is aligned with installer `ADDONS.md` plus migration helper:
 
 - Google Docs Integration (3.1.0)
 - OOTBee Support Tools (1.2.2.0)
-- Javascript Console (0.7)
+- ~~Javascript Console (0.7)~~ — incompatible with ACS 26.x (BOM in model XML)
 - Alfresco Share Site Creators (0.0.8)
-- Alfresco Share Site Space Templates (1.1.4-SNAPSHOT)
+- ~~Alfresco Share Site Space Templates (1.1.4-SNAPSHOT)~~ — incompatible with ACS 26.x (Log4j 1.x dependency)
 - Alfresco Share Online Edition Addon (0.3.0)
 - ESign Certification Addon (1.8.4)
-- Alfresco PDF Toolkit (1.4)
+- ~~Alfresco PDF Toolkit (1.4)~~ — incompatible with ACS 26.x (removed `baseContentTransformer` bean)
 - Alfresco T-Engine OCR Addon
 - Model NS Prefix Mapping (required for migration reindex)
 

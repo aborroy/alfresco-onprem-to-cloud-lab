@@ -54,7 +54,7 @@ From this repository root:
 
 ```bash
 cd stages/10-restore-onprem
-mkdir -p ./import/_extracted ./import/db ./import/alf_data ./import/config/alfresco-extension
+mkdir -p ./import/_extracted ./import/db ./import/alf_data ./import/config/alfresco-extension/keystore
 
 # Example with compressed backup from installer
 tar -xzf /path/to/pre-docker-migration_YYYYMMDD_HHMMSS.tar.gz -C ./import/_extracted

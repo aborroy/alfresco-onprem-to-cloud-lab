@@ -629,6 +629,10 @@ docker compose --env-file .env -f stages/08-best-practices/compose.yaml down
 docker compose --env-file .env -f stages/09-addons/compose.yaml up --build
 ```
 
+> **Note:** Javascript Console (0.7), Share Site Space Templates (1.1.x), and PDF Toolkit (1.4)
+> are disabled in `fetch-addons.sh` as they are incompatible with ACS 26.x. See
+> [stages/09-addons/ADDONS.md](stages/09-addons/ADDONS.md) for details.
+
 Validate DB and Repository (instructions above)
 
 Validate Search (instructions above, including OpenSearch API and Alfresco API)

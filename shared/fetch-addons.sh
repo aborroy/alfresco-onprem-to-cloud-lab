@@ -57,14 +57,14 @@ classify_target_dir() {
 
   case "${ext}" in
     amp)
-      if [[ "${lower_name}" =~ (share|surf|aikau) ]]; then
+      if [[ "${lower_name}" =~ (share|surf|aikau) ]] && ! [[ "${lower_name}" =~ -repo(-[0-9]|\.amp) ]]; then
         printf '%s\n' "${SHARE_AMPS_DIR}"
       else
         printf '%s\n' "${REPO_AMPS_DIR}"
       fi
       ;;
     jar)
-      if [[ "${lower_name}" =~ (share|surf|aikau) ]]; then
+      if [[ "${lower_name}" =~ (share|surf|aikau) ]] && ! [[ "${lower_name}" =~ -repo(-[0-9]|\.jar) ]]; then
         printf '%s\n' "${SHARE_JARS_DIR}"
       else
         printf '%s\n' "${REPO_JARS_DIR}"
@@ -147,12 +147,15 @@ BANNER
 
 fetch_addon "Google Docs Integration (3.1.0)"              "Alfresco/googledrive"                        "3.1.0"          '(google|googledocs|drive)'
 fetch_addon "OOTBee Support Tools (1.2.2.0)"               "OrderOfTheBee/ootbee-support-tools"          "1.2.2.0"        '(support-tools|ootbee)'
-fetch_addon "Javascript Console (0.7)"                     "share-extras/js-console"                     "0.7"            '(javascript-console|js-console)'
+# javascript-console 0.6/0.7 ships fme-jsconsole-model.xml with a UTF-8 BOM that ACS 26.x rejects
+# fetch_addon "Javascript Console (0.7)"                   "share-extras/js-console"                     "0.7"            '(javascript-console|js-console)'
 fetch_addon "Share Site Creators (0.0.8)"                  "aborroy/share-site-creators"                 "0.0.8"          '(site-creators|share-site-creators)'
-fetch_addon "Share Site Space Templates (1.1.4-SNAPSHOT)"  "jpotts/share-site-space-templates"           "1.1.4-SNAPSHOT" '(site-space-templates|space-templates)'
+# share-site-space-templates uses log4j 1.x API removed in ACS 23+
+# fetch_addon "Share Site Space Templates (1.1.4-SNAPSHOT)" "jpotts/share-site-space-templates"          "1.1.4-SNAPSHOT" '(site-space-templates|space-templates)'
 fetch_addon "Share Online Edition Addon (0.3.0)"           "zylklab/alfresco-share-online-edition-addon" "0.3.0"          '(online-edition|libreoffice|share-online)'
 fetch_addon "ESign Certification Addon (1.8.4)"            "ambientelivre/alfresco-esign-cert"           "1.8.4"          '(esign|cert)'
-fetch_addon "Alfresco PDF Toolkit (1.4)"                   "OrderOfTheBee/alfresco-pdf-toolkit"          "1.4"            '(pdf-toolkit|pdftoolkit|pdf)'
+# pdf-toolkit 1.4 references baseContentTransformer bean removed in ACS 7+
+# fetch_addon "Alfresco PDF Toolkit (1.4)"                 "OrderOfTheBee/alfresco-pdf-toolkit"          "1.4"            '(pdf-toolkit|pdftoolkit|pdf)'
 fetch_addon "Alfresco T-Engine OCR Addon"                  "aborroy/alf-tengine-ocr"                     "1.0.0"          '(ocr|tengine)'
 fetch_addon "Model NS Prefix Mapping (required for migration reindex)" "AlfrescoLabs/model-ns-prefix-mapping" "1.0.0" '(model-ns-prefix|ns-prefix|prefix-mapping)'
 
