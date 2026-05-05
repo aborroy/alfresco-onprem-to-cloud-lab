@@ -10,5 +10,5 @@ COPY addons/share/jars/ ${TOMCAT_DIR}/webapps/share/WEB-INF/lib/
 RUN set -eux; \
   if find ${TOMCAT_DIR}/amps -maxdepth 1 -name '*.amp' | grep -q .; then \
     MMT_JAR="$(find ${TOMCAT_DIR}/alfresco-mmt -maxdepth 1 -name 'alfresco-mmt*.jar' | head -n 1)"; \
-    java -jar "${MMT_JAR}" install ${TOMCAT_DIR}/amps/*.amp ${TOMCAT_DIR}/webapps/share -nobackup -force; \
+    java -jar "${MMT_JAR}" install "${TOMCAT_DIR}/amps" "${TOMCAT_DIR}/webapps/share" -nobackup -force; \
   fi

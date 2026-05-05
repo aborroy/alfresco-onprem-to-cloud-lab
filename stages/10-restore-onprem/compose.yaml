@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
 
   opensearch:
-    image: opensearchproject/opensearch:${OPENSEARCH_TAG:-2.19.0}
+    image: opensearchproject/opensearch:${OPENSEARCH_TAG}
     deploy:
       resources:
         limits:
@@ -343,6 +343,7 @@ services:
     environment:
       APP_CONFIG_PROVIDER: ECM
       APP_CONFIG_AUTH_TYPE: BASIC
+      APP_CONFIG_ECM_HOST: http://localhost:${PROXY_HTTP_PORT}
       BASE_PATH: /workspace/
       APP_BASE_SHARE_URL: http://localhost:${PROXY_HTTP_PORT}/workspace/#/preview/s
     healthcheck:

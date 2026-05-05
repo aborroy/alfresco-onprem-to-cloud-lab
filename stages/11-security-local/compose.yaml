@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
 
   opensearch:
-    image: opensearchproject/opensearch:${OPENSEARCH_TAG:-2.19.0}
+    image: opensearchproject/opensearch:${OPENSEARCH_TAG}
     deploy:
       resources:
         limits:
@@ -71,6 +71,8 @@ services:
         reservations:
           cpus: "0.5"
           memory: 512m
+    ports:
+      - "${ACTIVEMQ_WEB_PORT}:8161"
     environment:
       ACTIVEMQ_USERNAME: ${ACTIVEMQ_USERNAME}
       ACTIVEMQ_PASSWORD: ${ACTIVEMQ_PASSWORD}
@@ -342,6 +344,7 @@ services:
     environment:
       APP_CONFIG_PROVIDER: ECM
       APP_CONFIG_AUTH_TYPE: BASIC
+      APP_CONFIG_ECM_HOST: https://${NGINX_SERVER_NAME:-localhost}:${PROXY_HTTPS_PORT:-8443}
       BASE_PATH: /workspace/
       APP_BASE_SHARE_URL: https://${NGINX_SERVER_NAME:-localhost}:${PROXY_HTTPS_PORT:-8443}/workspace/#/preview/s
     healthcheck:
