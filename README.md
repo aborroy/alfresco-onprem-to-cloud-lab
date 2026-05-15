@@ -229,7 +229,7 @@ Validate DB and Repository (instructions above)
 Validate Transform (new in this step: ATS async)
 
 ```bash
-curl -f http://localhost:8161
+curl -f -u admin:admin http://localhost:8161
 docker compose --env-file .env -f stages/03-transform-service-ats/compose.yaml exec -T shared-file-store \
   curl -sf http://localhost:8099/ready
 docker compose --env-file .env -f stages/03-transform-service-ats/compose.yaml exec -T transform-router \
