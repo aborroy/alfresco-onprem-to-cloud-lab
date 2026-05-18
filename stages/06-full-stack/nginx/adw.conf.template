@@ -1,0 +1,42 @@
+server {
+    listen       ${SERVER_PORT};
+    server_name  localhost;
+
+    root /usr/share/nginx/html;
+
+    absolute_redirect off;
+
+    # Proxy /alfresco to the repository — same origin as ADW, no CORS needed
+    location /alfresco/ {
+        proxy_pass http://alfresco:8080/alfresco/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_redirect off;
+    }
+
+    location ${BASE_PATH} {
+        rewrite ^([^.]*[^/])$ $1/ permanent;
+        set $EVAL_BASE_PATH "${BASE_PATH}";
+        if ($EVAL_BASE_PATH = "/") {
+            root   /usr/share/nginx/html;
+        }
+        index  index.html index.htm;
+        alias  /usr/share/nginx/html;
+    }
+
+    location ~ /app.config.json {
+        alias  ${NGINX_ENVSUBST_OUTPUT_DIR}/app.config.json;
+    }
+
+    location ~ /assets/plugins/custom.modeled.extension.json {
+        alias  ${NGINX_ENVSUBST_OUTPUT_DIR}/custom.modeled.extension.json;
+    }
+
+    server_tokens off;
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}

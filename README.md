@@ -401,6 +401,18 @@ flowchart LR
   reidx -. "completes first" .-> live
 ```
 
+**CORS and the embedded ADW proxy**
+
+ADW (`localhost:8081`), Control Center (`localhost:8083`), and Share (`localhost:8082`) each run on a different port from the repository (`localhost:8080`). Browsers treat different ports as different origins, so every API call from these UIs is a cross-origin request subject to CORS.
+
+Alfresco's built-in CORS filter (`-Dcors.enabled=true`) handles this at the Alfresco layer — but it only adds `Access-Control-*` headers after its own filter chain runs. The critical detail is that **the browser sends a CORS preflight (OPTIONS) before every non-simple XHR**, and that preflight includes an `Access-Control-Request-Headers` value listing every header the real request will use — including `cache-control`, which browsers always send but which was missing from the `cors.allowed.headers` list. Tomcat's CorsFilter rejects any preflight that requests an unlisted header with a bare 403 (no CORS headers), which the browser reports as "CORS header missing".
+
+Additionally, ADF 7.x makes an OIDC discovery probe (`/auth/realms/alfresco/.well-known/openid-configuration`) on startup even with `authType: BASIC` unless `codeFlow` and `silentLogin` are both explicitly set to `false`.
+
+Rather than enumerate every header the browser may send, ADW's built-in nginx is configured here to **proxy `/alfresco/` back to the repository container**. This makes all repo API calls same-origin from the browser's perspective (port 8081 → ADW nginx → repo), eliminating CORS entirely for ADW. The configuration is in `stages/06-full-stack/nginx/adw.conf.template`, which is mounted over the ADW container's nginx template at startup.
+
+Share connects server-side (container-to-container), so it has no CORS exposure. Control Center still makes direct browser calls to port 8080, so it retains the CORS headers on the repository.
+
 **Start**
 
 ```bash
@@ -420,12 +432,13 @@ Validate UI (manual end-to-end)
 2. Log in with credentials from `.env` (`ALFRESCO_ADMIN_USER` / `ALFRESCO_ADMIN_PASSWORD`, defaults usually `admin` / `admin`).
 3. Upload a new text document with a unique word in its body (for example: `stage06-e2e-2026`).
 4. Search in ADW for that unique word and open the returned document.
-5. Optionally repeat in Share at `http://localhost:8082/share` to confirm same result.
+5. Open `http://localhost:8082/share` and confirm the same document appears.
+6. Open `http://localhost:8083/` (Control Center) and confirm login works.
 
 expected
 
 ```text
-Login works, upload succeeds, and full-text search returns the newly uploaded document.
+Login works in all three UIs, upload succeeds, and full-text search returns the newly uploaded document.
 This confirms repo, transform, messaging, and OpenSearch indexing are working together.
 ```
 
