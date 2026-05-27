@@ -413,6 +413,10 @@ Rather than enumerate every header the browser may send, ADW's built-in nginx is
 
 Share connects server-side (container-to-container), so it has no CORS exposure. Control Center still makes direct browser calls to port 8080, so it retains the CORS headers on the repository.
 
+**Accessing the stack from a hostname or IP other than `localhost`**
+
+By default the lab assumes you browse the UIs from the same machine that runs Docker, so the origin is `localhost`. If you need to reach the stack from another host (for example, a VM hostname or a LAN IP), set `NGINX_SERVER_NAME` in `.env` to that hostname or IP. Stage 06 wires this value into the repository's allowed CORS origins, into `alfresco.host`, and into the ADW/Control Center `APP_CONFIG_ECM_HOST` so the browser, the repo, and the UIs all agree on the same origin. Leaving `NGINX_SERVER_NAME=localhost` keeps the original behavior.
+
 **Start**
 
 ```bash
@@ -428,12 +432,12 @@ Validate Transform (instructions above)
 
 Validate UI (manual end-to-end)
 
-1. Open `http://localhost:8081/` (ADW) in your browser.
+1. Open `http://${NGINX_SERVER_NAME}:8081/` (ADW) in your browser, where `${NGINX_SERVER_NAME}` is the value from `.env` (defaults to `localhost`).
 2. Log in with credentials from `.env` (`ALFRESCO_ADMIN_USER` / `ALFRESCO_ADMIN_PASSWORD`, defaults usually `admin` / `admin`).
 3. Upload a new text document with a unique word in its body (for example: `stage06-e2e-2026`).
 4. Search in ADW for that unique word and open the returned document.
-5. Open `http://localhost:8082/share` and confirm the same document appears.
-6. Open `http://localhost:8083/` (Control Center) and confirm login works.
+5. Open `http://${NGINX_SERVER_NAME}:8082/share` and confirm the same document appears.
+6. Open `http://${NGINX_SERVER_NAME}:8083/` (Control Center) and confirm login works.
 
 expected
 

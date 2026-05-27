@@ -78,7 +78,7 @@ services:
         -Ddb.password=${POSTGRES_PASSWORD}
         -Ddb.url=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
         -Ddeployment.method=DOCKER_COMPOSE
-        -Dalfresco.host=localhost
+        -Dalfresco.host=${NGINX_SERVER_NAME:-localhost}
         -Dalfresco.port=${REPO_HTTP_PORT}
         -Dalfresco.protocol=http
         -Dindex.subsystem.name=elasticsearch
@@ -97,7 +97,7 @@ services:
         -DlocalTransform.core-aio.url=http://transform-core-aio:8090/
         -Dcsrf.filter.enabled=false
         -Dcors.enabled=true
-        -Dcors.allowed.origins=http://localhost:${ADW_HTTP_PORT},http://localhost:${CONTROL_CENTER_HTTP_PORT},http://localhost:${SHARE_HTTP_PORT}
+        -Dcors.allowed.origins=http://${NGINX_SERVER_NAME:-localhost}:${ADW_HTTP_PORT},http://${NGINX_SERVER_NAME:-localhost}:${CONTROL_CENTER_HTTP_PORT},http://${NGINX_SERVER_NAME:-localhost}:${SHARE_HTTP_PORT}
         -Dcors.allowed.methods=GET,POST,PUT,DELETE,OPTIONS,HEAD
         -Dcors.allowed.headers=Authorization,Content-Type,Cache-Control,Accept,Origin,X-Requested-With,Access-Control-Request-Method,Access-Control-Request-Headers
         -Dcors.exposed.headers=Access-Control-Allow-Origin,Access-Control-Allow-Credentials
@@ -160,7 +160,7 @@ services:
     environment:
       APP_CONFIG_PROVIDER: ECM
       APP_CONFIG_AUTH_TYPE: BASIC
-      APP_CONFIG_ECM_HOST: http://localhost:${ADW_HTTP_PORT}
+      APP_CONFIG_ECM_HOST: http://${NGINX_SERVER_NAME:-localhost}:${ADW_HTTP_PORT}
       APP_CONFIG_OAUTH2_SILENT_LOGIN: "false"
       APP_CONFIG_OAUTH2_CODE_FLOW: "false"
       APP_CONFIG_PLUGIN_PROCESS_SERVICE: "false"
@@ -177,7 +177,7 @@ services:
     environment:
       APP_CONFIG_PROVIDER: ECM
       APP_CONFIG_AUTH_TYPE: BASIC
-      APP_CONFIG_ECM_HOST: http://localhost:${REPO_HTTP_PORT}
+      APP_CONFIG_ECM_HOST: http://${NGINX_SERVER_NAME:-localhost}:${REPO_HTTP_PORT}
 
   share:
     image: quay.io/alfresco/alfresco-share:${SHARE_TAG}
