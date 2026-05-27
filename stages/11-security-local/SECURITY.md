@@ -51,20 +51,28 @@ Reference:
 chmod 600 .env
 ```
 
+## Accessing the stack from a hostname or IP other than `localhost`
+
+By default the lab assumes you browse the UIs from the same machine that runs Docker, so the origin is `localhost`. If you need to reach the stack from another host (for example, a VM hostname or a LAN IP), set `NGINX_SERVER_NAME` in `.env` to that hostname or IP before generating certificates and starting the stack. Stage 11 wires this value into `alfresco.host`, `share.host`, the ADW `APP_CONFIG_ECM_HOST` / `APP_BASE_SHARE_URL`, and the Share `CSRF_FILTER_ORIGIN` / `CSRF_FILTER_REFERER`, so the browser, the repo, and the UIs all agree on the same origin.
+
+The certificate's subjectAltName must also match how clients reach the stack. `generate-certs.sh` auto-detects whether `NGINX_SERVER_NAME` is a hostname or an IPv4 address and emits the SAN accordingly (`DNS:<name>` vs `IP:<addr>`); `127.0.0.1` is always included so on-host checks still work.
+
 ## Generate Local Self-Signed Certificate
 
-Stage 11 includes helper script:
+Stage 11 includes a helper script. Set `NGINX_SERVER_NAME` to the hostname or IP clients will use:
 
 ```bash
 cd stages/11-security-local
-NGINX_SERVER_NAME=localhost ./generate-certs.sh
+NGINX_SERVER_NAME=localhost ./generate-certs.sh        # localhost-only access
+NGINX_SERVER_NAME=acs.example.com ./generate-certs.sh  # remote access by hostname
+NGINX_SERVER_NAME=10.0.0.5 ./generate-certs.sh         # remote access by IP
 ```
 
 Force regeneration:
 
 ```bash
 cd stages/11-security-local
-NGINX_SERVER_NAME=localhost ./generate-certs.sh --force
+NGINX_SERVER_NAME=${NGINX_SERVER_NAME:-localhost} ./generate-certs.sh --force
 ```
 
 ## Run Stage 11
@@ -75,12 +83,14 @@ docker compose --env-file ../../.env -f compose.yaml up -d --build
 
 ## Verify HTTPS and TLS 1.3
 
+Use the same `NGINX_SERVER_NAME` value the certificate was generated for:
+
 ```bash
 # Readiness over HTTPS (self-signed: -k)
-curl -k https://localhost:${PROXY_HTTPS_PORT:-8443}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
+curl -k https://${NGINX_SERVER_NAME:-localhost}:${PROXY_HTTPS_PORT:-8443}/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
 
 # Confirm TLS 1.3 negotiation
-openssl s_client -connect localhost:${PROXY_HTTPS_PORT:-8443} -tls1_3
+openssl s_client -connect ${NGINX_SERVER_NAME:-localhost}:${PROXY_HTTPS_PORT:-8443} -tls1_3
 ```
 
 ## Backup Guidance

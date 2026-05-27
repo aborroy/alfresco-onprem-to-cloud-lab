@@ -20,11 +20,17 @@ if [[ -f "${KEY_FILE}" || -f "${CRT_FILE}" ]] && [[ "${FORCE}" -ne 1 ]]; then
   exit 0
 fi
 
+if [[ "${SERVER_NAME}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  SAN="IP:${SERVER_NAME},IP:127.0.0.1"
+else
+  SAN="DNS:${SERVER_NAME},IP:127.0.0.1"
+fi
+
 openssl req -x509 -nodes -days "${DAYS}" -newkey rsa:2048 \
   -keyout "${KEY_FILE}" \
   -out "${CRT_FILE}" \
   -subj "/C=US/ST=Local/L=Local/O=Alfresco/CN=${SERVER_NAME}" \
-  -addext "subjectAltName=DNS:${SERVER_NAME},IP:127.0.0.1"
+  -addext "subjectAltName=${SAN}"
 
 chmod 600 "${KEY_FILE}"
 chmod 644 "${CRT_FILE}"
