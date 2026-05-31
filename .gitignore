@@ -24,5 +24,8 @@ stages/**/import/
 # Local TLS certs (generated)
 stages/11-security-local/proxy/certs/
 
+# Alfresco license files (must never be committed)
+*.lic
+
 # Bakery stage generated files
 stages/12-k8s-image-bakery/helm-values.overrides.yaml
