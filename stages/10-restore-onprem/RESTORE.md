@@ -46,18 +46,30 @@ Expected backup content:
   # optional: solr/
 ```
 
-Copy that backup archive (or extracted directory) to this lab machine.
+If the Docker lab runs on the **same machine** as the old installation, the
+archive is already available locally at
+`/home/ubuntu/backups/pre-docker-migration_*.tar.gz` — no copy needed.
+Otherwise, copy it to the lab machine first:
+
+```bash
+scp ubuntu@<OLD_SERVER_IP>:/home/ubuntu/backups/pre-docker-migration_*.tar.gz \
+  /home/ubuntu/
+```
 
 ## 2) Extract and Place Backup Files
 
-From this repository root:
+From the **lab repository root** (where you cloned `alfresco-onprem-to-cloud-lab`):
 
 ```bash
 cd stages/10-restore-onprem
 mkdir -p ./import/_extracted ./import/db ./import/alf_data ./import/config/alfresco-extension/keystore
 
-# Example with compressed backup from installer
-tar -xzf /path/to/pre-docker-migration_YYYYMMDD_HHMMSS.tar.gz -C ./import/_extracted
+# Set this to the actual archive produced in Step 1 before running
+# Default location from alfresco-ubuntu-installer: /home/ubuntu/backups/
+BACKUP_ARCHIVE="/home/ubuntu/backups/pre-docker-migration_YYYYMMDD_HHMMSS.tar.gz"
+
+test -f "$BACKUP_ARCHIVE" || { echo "ERROR: backup archive not found: $BACKUP_ARCHIVE"; exit 1; }
+tar -xzf "$BACKUP_ARCHIVE" -C ./import/_extracted
 
 manifest_file="$(find ./import/_extracted -type f -name manifest.txt | head -1 || true)"
 test -n "$manifest_file" || { echo "manifest.txt not found in extracted backup"; exit 1; }
@@ -85,7 +97,17 @@ else
 fi
 ```
 
+Verify the import directories before continuing:
+
+```bash
+ls ./import/db/          # should list database_alfresco.dump and/or database_alfresco.sql
+du -sh ./import/alf_data/ # should match the content store size on the old server
+```
+
 ## 3) Start Infrastructure Services
+
+Start only infrastructure services — Alfresco is excluded intentionally to
+avoid it initializing against an empty or wrong database before the restore.
 
 ```bash
 cd stages/10-restore-onprem
@@ -95,9 +117,17 @@ docker compose --env-file ../../.env -f compose.yaml up -d \
   postgres opensearch activemq shared-file-store transform-core-aio transform-router
 ```
 
+Wait until all services are healthy before proceeding to Step 4:
+
+```bash
+docker compose --env-file ../../.env -f compose.yaml ps
+# all 6 services should show "healthy" or "running"
+```
+
 ## 4) Restore PostgreSQL
 
-Drop and recreate the target database:
+Drop and recreate the target database (the container init script creates an
+empty one on first start; this replaces it with the backup):
 
 ```bash
 docker compose --env-file ../../.env -f compose.yaml exec -T postgres \
@@ -107,7 +137,9 @@ docker compose --env-file ../../.env -f compose.yaml exec -T postgres \
   psql -U "$POSTGRES_USER" -d postgres -c "CREATE DATABASE \"$POSTGRES_DB\" OWNER \"$POSTGRES_USER\";"
 ```
 
-Restore from `.dump` (preferred) or `.sql`:
+Restore from `.dump` (preferred) or `.sql`. `--no-owner --no-privileges` is
+required because the backup was created by the system `postgres` user on the
+old server, which does not exist in the container:
 
 ```bash
 dump_file="$(ls -1 ./import/db/database_*.dump 2>/dev/null | head -1 || true)"
@@ -125,20 +157,39 @@ else
 fi
 ```
 
+Verify the restore succeeded:
+
+```bash
+docker compose --env-file ../../.env -f compose.yaml exec -T postgres \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT count(*) FROM alf_node;"
+# should return a non-zero row count matching the old installation
+```
+
 ## 5) Prepare Addons for Stage 10 (Required)
 
 Populate Stage 10 addon folders and ensure `model-ns-prefix-mapping` is present
-in `addons/repository/jars`:
+in `addons/repository/jars`. This addon is mandatory — it exposes the endpoint
+used in Step 7 to generate the namespace prefix map for reindexing:
 
 ```bash
 cd stages/10-restore-onprem
 ../../shared/fetch-addons.sh
 ```
 
+Verify the required addon is present:
+
+```bash
+ls addons/repository/jars/model-ns-prefix-mapping-*.jar   # must exist
+```
+
 For exact parity with your on-prem installation, follow [ADDONS.md](./ADDONS.md)
 to copy the same AMP/JAR files from the old server.
 
 ## 6) Start Full Stage 10
+
+Builds and starts all remaining services including `alfresco` and `share` with
+the addons baked in. Alfresco will detect the restored database schema and skip
+initialization.
 
 ```bash
 docker compose --env-file ../../.env -f compose.yaml up -d
@@ -149,7 +200,20 @@ Mounted import paths:
 - `./import/config/alfresco-extension` ->
   `/usr/local/tomcat/shared/classes/alfresco/extension`
 
+Wait until Alfresco is healthy before proceeding to Step 7 (takes 2–3 min):
+
+```bash
+docker compose --env-file ../../.env -f compose.yaml logs -f alfresco
+# look for: "Server startup in"
+docker compose --env-file ../../.env -f compose.yaml ps alfresco
+# should show: healthy
+```
+
 ## 7) Generate Namespace Prefix Map (Required Before Reindex)
+
+This step must run after Alfresco is healthy (Step 6) and before starting
+`search-reindexing` (Step 8). The prefix map is mounted read-only into the
+reindexing container and cannot be regenerated without restarting it.
 
 Default proxy port in this lab is `8080` (from `.env`):
 
@@ -165,10 +229,20 @@ Validate the file is non-empty:
 test -s ../../shared/reindex/reindex.prefixes-file.json && echo "prefix map generated"
 ```
 
-If this endpoint fails, rebuild Stage 10 after installing
-`model-ns-prefix-mapping` into `addons/repository/jars`.
+If the curl fails, check Alfresco startup and addon presence:
+
+```bash
+docker compose --env-file ../../.env -f compose.yaml logs alfresco | grep -i "startup\|error"
+ls addons/repository/jars/model-ns-prefix-mapping-*.jar
+```
+
+If `model-ns-prefix-mapping` was missing, add it, rebuild Stage 10
+(`docker compose ... up -d --build`), and re-run this step.
 
 ## 8) Reindex From Scratch in OpenSearch
+
+`search-live-indexing` depends on `search-reindexing` completing successfully —
+it will not start until the batch job exits cleanly. This is expected behavior.
 
 ```bash
 # Delete Alfresco-related indexes (ignore if they do not exist yet)
@@ -182,11 +256,15 @@ docker compose --env-file ../../.env -f compose.yaml up -d search-reindexing
 docker compose --env-file ../../.env -f compose.yaml logs -f search-reindexing
 ```
 
-Quick index check:
+Confirm reindex completed and live indexing is running:
 
 ```bash
+docker compose --env-file ../../.env -f compose.yaml ps search-reindexing search-live-indexing
+# search-reindexing: exited (0)   search-live-indexing: healthy/running
+
 docker compose --env-file ../../.env -f compose.yaml exec -T opensearch \
-  curl -fsS "http://localhost:9200/_cat/indices?v"
+  curl -s "http://localhost:9200/_cat/indices?v" | grep alfresco
+# should show alfresco index with docs.count > 0
 ```
 
 ## 9) Validation
@@ -195,3 +273,16 @@ docker compose --env-file ../../.env -f compose.yaml exec -T opensearch \
 2. Confirm documents are present and preview works.
 3. Search for known content from previous installation.
 4. Verify no startup errors in `alfresco`, `search-live-indexing`, and `search-reindexing` logs.
+
+```bash
+# Confirm restore mounts are present inside the container
+docker compose --env-file ../../.env -f compose.yaml exec -T alfresco sh -c \
+  'test -d /usr/local/tomcat/alf_data && test -d /usr/local/tomcat/shared/classes/alfresco/extension && echo "restore mounts present"'
+
+# Check for startup errors
+docker compose --env-file ../../.env -f compose.yaml logs alfresco | grep -i "error\|exception" | tail -20
+docker compose --env-file ../../.env -f compose.yaml logs search-live-indexing | grep -i "error\|exception" | tail -20
+
+# Confirm all services are healthy
+docker compose --env-file ../../.env -f compose.yaml ps
+```
